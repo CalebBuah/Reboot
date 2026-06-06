@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Forgot Password</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="shared.css" />
+    <link rel="stylesheet" href="forgot.css" />
+  </head>
+  <body>
+    <div class="orbs">
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
+    </div>
+    <div class="grid-bg"></div>
+
+    <div class="wrapper">
+      <div class="card">
+        <div class="brand">
+          <div class="brand-icon">R</div>
+          <span class="brand-name">Reboot</span>
+        </div>
+
+        <div class="lock-icon-wrap">
+          <div class="lock-icon">🔒</div>
+        </div>
+
+        <h1>Forgot password?</h1>
+        <p class="subtitle">Enter your email and we'll send you a reset link</p>
+
+        <form method="post" action="#" id="forgot-form">
+          <div class="field">
+            <label class="field-label" for="reset-email">Email Address</label>
+            <div class="input-wrap">
+              <span class="input-icon">
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"
+                  />
+                  <polyline points="22,6 12,13 2,6" />
+                </svg>
+              </span>
+              <input
+                id="reset-email"
+                name="email"
+                type="email"
+                placeholder="jane@example.com"
+                required
+              />
+            </div>
+          </div>
+
+          <button type="submit" class="submit-btn" onclick="handleReset(event)">
+            <span class="btn-shine"></span>
+            Send Reset Link →
+          </button>
+        </form>
+
+        <div class="success-msg" id="success-msg">
+          <div class="success-icon">✅</div>
+          <p class="success-title">Check your inbox</p>
+          <p class="success-sub">
+            We sent a reset link to <strong id="sent-email"></strong>
+          </p>
+        </div>
+
+        <p class="bottom-link">
+          <a href="signin.html" class="back-link">← Back to Sign In</a>
+        </p>
+      </div>
+    </div>
+
+    <script src="forgot.js"></script>
+  </body>
+</html>

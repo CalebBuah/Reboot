@@ -1,0 +1,56 @@
+
+/* ── Lock icon ── */
+.lock-icon-wrap {
+  text-align: center;
+  margin-bottom: 1.2rem;
+  animation: fadeIn 0.6s 0.25s both;
+}
+.lock-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: rgba(124, 110, 247, 0.12);
+  border: 1px solid var(--border-hover);
+  border-radius: 16px;
+  font-size: 26px;
+}
+
+/* ── Input without right padding (no toggle btn) ── */
+.input-wrap input.no-toggle {
+  padding-right: 1rem;
+}
+
+/* ── Success message ── */
+.success-msg {
+  display: none;
+  text-align: center;
+  padding: 1.5rem 0 0.5rem;
+  animation: fadeIn 0.5s both;
+}
+.success-icon { font-size: 40px; margin-bottom: 1rem; }
+.success-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.4rem;
+}
+.success-sub { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+.success-sub strong { color: var(--accent2); }
+
+/* ── Back link ── */
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.83rem;
+  color: var(--muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.back-link:hover { color: var(--accent2); }
+
+/* ── JS-toggled visibility ── */
+.hidden  { display: none !important; }
+.visible { display: block !important; }
