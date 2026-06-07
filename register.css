@@ -6,9 +6,10 @@
 /* ── Two-column row layout ── */
 .row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1 fr 1 fr;
   gap: 14px;
-}
+}  
+ 
 
 /* ── Staggered field animations ── */
 .field:nth-child(1) { animation-delay: 0.40s; }
@@ -78,7 +79,7 @@ textarea.plain-input { resize: none; min-height: 80px; line-height: 1.5; }
 /* ── Account type cards ── */
 .account-types {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1 fr 1 fr;
   gap: 10px;
   margin-bottom: 1.1rem;
   animation: fadeIn 0.5s 0.58s both;
