@@ -1,57 +1,301 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard — Reboot</title>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="shared.css" />
-  <link rel="stylesheet" href="content.css" />
-</head>
-<body>
-
-  <div class="orbs">
-    <div class="orb orb1"></div>
-    <div class="orb orb2"></div>
-    <div class="orb orb3"></div>
-  </div>
-  <div class="grid-bg"></div>
-
-  <!-- Navbar -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <a href="content.html" class="navbar-logo">
-        <span class="navbar-logo-icon">R</span>
-        <span class="navbar-logo-text">Reboot</span>
-      </a>
-      <button class="navbar-toggle" aria-label="Toggle menu">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-      </button>
-      <ul class="navbar-menu">
-        <li><a href="content.html" class="active">Home</a></li>
-        <li><a href="#">About</a></li>
-        <li><a href="#">Services</a></li>
-        <li><a href="#">Blog</a></li>
-        <li><a href="signin.html" class="nav-signout">Sign Out</a></li>
-      </ul>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Reboot</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="shared.css" />
+    <link rel="stylesheet" href="content.css" />
+  </head>
+  <body>
+    <div class="orbs">
+      <div class="orb orb1"></div>
+      <div class="orb orb2"></div>
+      <div class="orb orb3"></div>
     </div>
-  </nav>
+    <div class="grid-bg"></div>
 
-  <main class="main-content">
-    <div class="hero">
-      <div class="hero-badge">✦ Welcome back</div>
-      <h1 class="hero-title">Your Dashboard</h1>
-      <p class="hero-sub">Everything you need, all in one place. Explore your content below.</p>
-      <div class="hero-actions">
-        <button class="btn-primary"><span class="btn-shine"></span>Get Started</button>
-        <button class="btn-ghost">Learn More</button>
+    <!-- Navbar -->
+    <nav class="navbar">
+      <div class="navbar-container">
+        <a href="content.html" class="navbar-logo">
+          <span class="navbar-logo-icon">R</span>
+          <span class="navbar-logo-text">Reboot</span>
+        </a>
+        <button class="navbar-toggle" aria-label="Toggle menu">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+        <ul class="navbar-menu">
+          <li><a href="content.html" class="active">Home</a></li>
+          <li><a href="#">Logs</a></li>
+          <li><a href="#">Settings</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="signin.html" class="nav-signout">Sign Out</a></li>
+        </ul>
       </div>
-    </div>
+    </nav>
 
+    <main class="main-content">
+      <!-- Page header -->
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-sub">
+            Monitor and control your router power system in real time.
+          </p>
+        </div>
+        <div class="header-actions">
+          <div class="live-dot-wrap">
+            <span class="live-dot"></span>
+            <span class="live-label" id="live-label">System Online</span>
+          </div>
+          <button class="hbtn prim" onclick="refreshData()">
+            &#8635; Refresh
+          </button>
+        </div>
+      </div>
+
+      <!-- Alert banner -->
+      <div class="alert-banner" id="alert-banner">
+        <span class="alert-icon">&#9888;</span>
+        <span id="alert-msg"></span>
+      </div>
+
+      <!-- Stat cards -->
+      <div class="stat-grid">
+        <div class="stat-card stat-green">
+          <div class="stat-top">
+            <span class="stat-label">Internet status</span>
+            <span class="stat-icon-wrap green-icon">&#9679;</span>
+          </div>
+          <div class="stat-value" id="conn-status">Connected</div>
+          <span class="stat-badge badge-ok" id="conn-badge"
+            >All endpoints reachable</span
+          >
+        </div>
+
+        <div class="stat-card stat-purple">
+          <div class="stat-top">
+            <span class="stat-label">Uptime</span>
+            <span class="stat-icon-wrap purple-icon">&#9711;</span>
+          </div>
+          <div class="stat-value mono" id="uptime-val">00:00:00</div>
+          <div class="stat-sub">Since last restart</div>
+        </div>
+
+        <div class="stat-card stat-amber">
+          <div class="stat-top">
+            <span class="stat-label">Auto-restarts</span>
+            <span class="stat-icon-wrap amber-icon">&#8635;</span>
+          </div>
+          <div class="stat-value" id="restart-count">0</div>
+          <div class="stat-sub">Limit: 5 per hour</div>
+        </div>
+
+        <div class="stat-card stat-purple">
+          <div class="stat-top">
+            <span class="stat-label">Relay state</span>
+            <span class="stat-icon-wrap purple-icon">&#9889;</span>
+          </div>
+          <div class="stat-value relay-idle" id="relay-state">Idle</div>
+          <span class="stat-badge badge-idle" id="relay-badge"
+            >GPIO 5 — LOW</span
+          >
+        </div>
+      </div>
+
+      <!-- Mid row: chart + side panels -->
+      <div class="mid-grid">
+        <!-- Ping activity + connectivity checks -->
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Ping activity (last 7 checks)</span>
+            <span class="panel-tag">8.8.8.8</span>
+          </div>
+          <div class="bar-chart">
+            <div class="bar-wrap">
+              <div class="bar" id="bar1" style="height: 70%"></div>
+              <span class="bar-lbl">1</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" id="bar2" style="height: 85%"></div>
+              <span class="bar-lbl">2</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" id="bar3" style="height: 60%"></div>
+              <span class="bar-lbl">3</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" id="bar4" style="height: 90%"></div>
+              <span class="bar-lbl">4</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar dim" id="bar5" style="height: 30%"></div>
+              <span class="bar-lbl">5</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" id="bar6" style="height: 80%"></div>
+              <span class="bar-lbl">6</span>
+            </div>
+            <div class="bar-wrap">
+              <div class="bar" id="bar7" style="height: 95%"></div>
+              <span class="bar-lbl">7</span>
+            </div>
+          </div>
+          <div class="bar-legend">
+            <span class="legend-item"
+              ><span class="legend-dot purple-dot"></span>Pass</span
+            >
+            <span class="legend-item"
+              ><span class="legend-dot dim-dot"></span>Miss</span
+            >
+          </div>
+          <div class="divider"></div>
+          <div class="panel-sub-title">Connectivity checks</div>
+          <div class="ping-row">
+            <span class="ping-host">8.8.8.8 (Google DNS)</span
+            ><span class="ping-badge ok" id="ping1">&#10003; OK</span>
+          </div>
+          <div class="ping-row">
+            <span class="ping-host">1.1.1.1 (Cloudflare)</span
+            ><span class="ping-badge ok" id="ping2">&#10003; OK</span>
+          </div>
+          <div class="ping-row">
+            <span class="ping-host">google.com (HTTP)</span
+            ><span class="ping-badge ok" id="ping3">&#10003; OK</span>
+          </div>
+        </div>
+
+        <!-- Right column: ESP32 config + LEDs -->
+        <div class="side-col">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">ESP32 config</span>
+              <span class="panel-tag online" id="esp-badge">Online</span>
+            </div>
+            <div class="info-row">
+              <span class="il">Device</span
+              ><span class="iv">ESP32 DevKit V1</span>
+            </div>
+            <div class="info-row">
+              <span class="il">Interval</span><span class="iv">30 s</span>
+            </div>
+            <div class="info-row">
+              <span class="il">Fail threshold</span
+              ><span class="iv">3 checks</span>
+            </div>
+            <div class="info-row">
+              <span class="il">Relay delay</span
+              ><span class="iv">10 s off / 60 s wait</span>
+            </div>
+            <div class="info-row">
+              <span class="il">Restart limit</span
+              ><span class="iv">5 / hr</span>
+            </div>
+            <div class="info-row">
+              <span class="il">WiFi security</span><span class="iv">WPA2</span>
+            </div>
+            <div class="info-row">
+              <span class="il">Firmware state</span
+              ><span class="iv state-ok" id="fw-state">STATE_MONITORING</span>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">LED indicators</span>
+              <span class="panel-tag">GPIO status</span>
+            </div>
+            <div class="led-row">
+              <div class="led led-green" id="led-green"></div>
+              <div class="led-info">
+                <span class="led-name">Green — GPIO 13</span>
+                <span class="led-desc">Normal / Connected</span>
+              </div>
+              <span class="led-state on" id="ls-green">ON</span>
+            </div>
+            <div class="led-row">
+              <div class="led led-red off" id="led-red"></div>
+              <div class="led-info">
+                <span class="led-name">Red — GPIO 14</span>
+                <span class="led-desc">Failure detected</span>
+              </div>
+              <span class="led-state off" id="ls-red">OFF</span>
+            </div>
+            <div class="led-row">
+              <div class="led led-blue off" id="led-blue"></div>
+              <div class="led-info">
+                <span class="led-name">Blue — GPIO 15</span>
+                <span class="led-desc">Relay active</span>
+              </div>
+              <span class="led-state off" id="ls-blue">OFF</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom row: event log + sim controls -->
+      <div class="bot-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">System event log</span>
+            <button class="clear-btn" onclick="clearLog()">Clear</button>
+          </div>
+          <div class="log-wrap" id="event-log">
+            <div class="log-entry info">
+              <span class="log-time">00:00:00</span>
+              <span class="log-tag info-tag">INFO</span>
+              <span class="log-msg"
+                >System initialized — STATE_INIT complete</span
+              >
+            </div>
+            <div class="log-entry info">
+              <span class="log-time">00:00:02</span>
+              <span class="log-tag info-tag">INFO</span>
+              <span class="log-msg"
+                >Wi-Fi connected — entering STATE_MONITORING</span
+              >
+            </div>
+            <div class="log-entry success">
+              <span class="log-time">00:00:32</span>
+              <span class="log-tag ok-tag">OK</span>
+              <span class="log-msg"
+                >Ping 8.8.8.8 — 12ms. Connectivity normal.</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Simulation controls</span>
+            <span class="panel-tag">Demo mode</span>
+          </div>
+          <div class="sim-btns">
+            <button class="sim-btn" onclick="simulateConnected()">
+              <span class="sim-dot green-dot-sm"></span> Simulate connected
+            </button>
+            <button class="sim-btn" onclick="simulateFailure()">
+              <span class="sim-dot red-dot-sm"></span> Simulate failure
+            </button>
+            <button class="sim-btn" onclick="simulateRelay()">
+              <span class="sim-dot blue-dot-sm"></span> Simulate relay restart
+            </button>
+            <button class="sim-btn reset" onclick="resetAll()">
+              &#8635; Reset system
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
     
 
-  <script src="content.js"></script>
-</body>
+    <script src="content.js"></script>
+  </body>
 </html>
