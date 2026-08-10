@@ -92,7 +92,9 @@
         <div class="stat-card stat-amber">
           <div class="stat-top">
             <span class="stat-label">Auto-restarts</span>
-            <span class="stat-icon-wrap amber-icon">&#8635;</span>
+            <button class="restart-btn" onclick="forceRestart()" title="Manually trigger router restart">
+              <span class="restart-icon">&#8635;</span>
+            </button>
           </div>
           <div class="stat-value" id="restart-count">0</div>
           <div class="stat-sub">Limit: 5 per hour</div>
@@ -294,7 +296,6 @@
         </div>
       </div>
     </main>
-    
 
     <script src="content.js"></script>
   </body>

@@ -1,13 +1,21 @@
 // ═══════════════════════════════════════════════
-//  Reboot — content.js
-//  Local server polling (no Firebase)
-//  Polls http://<server-ip>:3000/status every 5s
+//  Reboot — content.js (Frontend only)
+//  Pure state management + UI updates
+//  No server polling — state driven by buttons
 // ═══════════════════════════════════════════════
 
-// ── Config ──
-// Change this to your laptop's local IP when testing with ESP32
-const SERVER_URL = 'http://localhost:3000/status';
-const POLL_INTERVAL_MS = 5000;
+// ── System state (single source of truth) ──
+let systemState = {
+  connected: true,
+  state: 'STATE_MONITORING',
+  failures: 0,
+  restarts: 0,
+  uptime: 0,
+  relayOn: false,
+  ping1: '12ms',
+  ping2: '18ms',
+  ping3: '200 OK'
+};
 
 // ── Navbar toggle ──
 const navbarToggle = document.querySelector('.navbar-toggle');
@@ -17,12 +25,14 @@ navbarToggle.addEventListener('click', () => {
   navbarToggle.classList.toggle('active');
   navbarMenu.classList.toggle('active');
 });
+
 document.querySelectorAll('.navbar-menu li a').forEach(link => {
   link.addEventListener('click', () => {
     navbarToggle.classList.remove('active');
     navbarMenu.classList.remove('active');
   });
 });
+
 document.addEventListener('click', (e) => {
   if (!navbarToggle.contains(e.target) && !navbarMenu.contains(e.target)) {
     navbarToggle.classList.remove('active');
@@ -48,6 +58,12 @@ function addLog(type, tag, tagClass, msg) {
     <span class="log-tag ${tagClass}">${tag}</span>
     <span class="log-msg">${msg}</span>`;
   log.prepend(entry);
+  
+  // Keep log from growing infinitely (max 50 entries)
+  const entries = log.querySelectorAll('.log-entry');
+  if (entries.length > 50) {
+    entries[entries.length - 1].remove();
+  }
 }
 
 function clearLog() {
@@ -75,19 +91,9 @@ function setLed(id, stateId, isOn) {
   st.className   = `led-state ${isOn ? 'on' : 'off'}`;
 }
 
-// ── Update dashboard from data object ──
-function updateDashboard(data) {
-  if (!data) return;
-
-  const connected = data.connected  !== undefined ? data.connected : true;
-  const state     = data.state      || 'STATE_MONITORING';
-  const failures  = data.failures   || 0;
-  const restarts  = data.restarts   || 0;
-  const uptime    = data.uptime     || 0;
-  const relayOn   = data.relayOn    || false;
-  const ping1     = data.ping1      || '--';
-  const ping2     = data.ping2      || '--';
-  const ping3     = data.ping3      || '--';
+// ── Render dashboard from state ──
+function renderDashboard() {
+  const { connected, state, failures, restarts, uptime, relayOn, ping1, ping2, ping3 } = systemState;
 
   // ── Internet status card ──
   const connEl    = document.getElementById('conn-status');
@@ -115,14 +121,14 @@ function updateDashboard(data) {
     showAlert(`Internet failure detected — ${failures} consecutive checks failed.`);
   }
 
-  // ── Uptime (synced from server; local ticker keeps it moving) ──
-  localUptime = uptime;
+  // ── Uptime card ──
+  document.getElementById('uptime-val').textContent = formatTime(uptime);
 
   // ── Restarts card ──
   document.getElementById('restart-count').textContent = restarts;
 
   // ── Relay card ──
-  const relayEl   = document.getElementById('relay-state');
+  const relayEl    = document.getElementById('relay-state');
   const relayBadge = document.getElementById('relay-badge');
   if (relayOn) {
     relayEl.textContent    = 'Active';
@@ -136,7 +142,7 @@ function updateDashboard(data) {
     relayBadge.className   = 'stat-badge badge-idle';
   }
 
-  // ── Firmware state row ──
+  // ── Firmware state ──
   const fwEl = document.getElementById('fw-state');
   fwEl.textContent = state;
   fwEl.className =
@@ -166,12 +172,12 @@ function updateDashboard(data) {
   setPing('ping2', connected, ping2);
   setPing('ping3', connected, ping3);
 
-  // ── Ping chart — push latest check to bar 7 ──
+  // ── Ping chart ──
   updateBarChart(connected);
 }
 
 // ── Ping activity bar chart ──
-const barHistory = [1,1,1,1,0,1,1]; // 1=pass, 0=miss (most recent = last)
+const barHistory = [1, 1, 1, 1, 0, 1, 1];
 function updateBarChart(passed) {
   barHistory.shift();
   barHistory.push(passed ? 1 : 0);
@@ -185,26 +191,14 @@ function updateBarChart(passed) {
 }
 
 // ── Local uptime ticker ──
-let localUptime = 0;
 setInterval(() => {
-  localUptime++;
-  const el = document.getElementById('uptime-val');
-  if (el) el.textContent = formatTime(localUptime);
+  systemState.uptime++;
+  document.getElementById('uptime-val').textContent = formatTime(systemState.uptime);
 }, 1000);
 
-// ── Poll local server ──
-async function fetchStatus() {
-  try {
-    const res  = await fetch(SERVER_URL);
-    const data = await res.json();
-    updateDashboard(data);
-  } catch (err) {
-    console.warn('Server unreachable — running in demo mode.');
-  }
-}
-
+// ── Refresh button ──
 function refreshData() {
-  fetchStatus();
+  renderDashboard();
   addLog('info', 'INFO', 'info-tag', 'Manual refresh triggered.');
 
   const btn = document.querySelector('.hbtn.prim');
@@ -221,95 +215,103 @@ function refreshData() {
   }
 }
 
-// Start polling
-fetchStatus();
-setInterval(fetchStatus, POLL_INTERVAL_MS);
+// ── Force restart button ──
+function forceRestart() {
+  simulateRelay();
+}
 
-// ── Simulation controls (local-only demo, no server needed) ──
+// ── Simulation controls ──
 function simulateConnected() {
-  updateDashboard({
+  systemState = {
     connected: true,
-    state:     'STATE_MONITORING',
-    failures:  0,
-    restarts:  parseInt(document.getElementById('restart-count').textContent) || 0,
-    uptime:    localUptime,
-    relayOn:   false,
-    ping1:     '12ms',
-    ping2:     '18ms',
-    ping3:     '200 OK'
-  });
+    state: 'STATE_MONITORING',
+    failures: 0,
+    restarts: systemState.restarts,
+    uptime: systemState.uptime,
+    relayOn: false,
+    ping1: '12ms',
+    ping2: '18ms',
+    ping3: '200 OK'
+  };
+  renderDashboard();
   addLog('success', 'OK', 'ok-tag', 'Internet connectivity confirmed — all checks passed.');
 }
 
 function simulateFailure() {
-  updateDashboard({
+  systemState = {
     connected: false,
-    state:     'STATE_FAILURE_DETECTED',
-    failures:  3,
-    restarts:  parseInt(document.getElementById('restart-count').textContent) || 0,
-    uptime:    localUptime,
-    relayOn:   false,
-    ping1:     'timeout',
-    ping2:     'timeout',
-    ping3:     'timeout'
-  });
+    state: 'STATE_FAILURE_DETECTED',
+    failures: 3,
+    restarts: systemState.restarts,
+    uptime: systemState.uptime,
+    relayOn: false,
+    ping1: 'timeout',
+    ping2: 'timeout',
+    ping3: 'timeout'
+  };
+  renderDashboard();
   addLog('danger', 'FAIL', 'danger-tag', 'Ping 8.8.8.8 — Timeout. Failure counter: 3 / 3.');
 }
 
 function simulateRelay() {
-  const currentRestarts = parseInt(document.getElementById('restart-count').textContent) || 0;
+  const currentRestarts = systemState.restarts;
 
-  updateDashboard({
-    connected: false,
-    state:     'STATE_RECOVERING',
-    failures:  3,
-    restarts:  currentRestarts,
-    uptime:    localUptime,
-    relayOn:   true
-  });
+  // Step 1: Relay activates
+  systemState = {
+    ...systemState,
+    state: 'STATE_RECOVERING',
+    relayOn: true
+  };
+  renderDashboard();
   addLog('info', 'RELAY', 'relay-tag', 'Relay activated — GPIO 5 HIGH. Router power cut.');
 
+  // Step 2: Relay off, waiting
   setTimeout(() => {
-    updateDashboard({
-      connected: false,
-      state:     'STATE_RECOVERY_WAIT',
-      failures:  3,
-      restarts:  currentRestarts + 1,
-      uptime:    localUptime,
-      relayOn:   false
-    });
+    systemState = {
+      ...systemState,
+      state: 'STATE_RECOVERY_WAIT',
+      relayOn: false,
+      restarts: currentRestarts + 1
+    };
+    renderDashboard();
     addLog('info', 'RELAY', 'relay-tag', 'Relay off — GPIO 5 LOW. Waiting for router boot (60s).');
 
+    // Step 3: Router back online
     setTimeout(() => {
-      updateDashboard({
+      systemState = {
         connected: true,
-        state:     'STATE_MONITORING',
-        failures:  0,
-        restarts:  currentRestarts + 1,
-        uptime:    localUptime,
-        relayOn:   false,
-        ping1:     '14ms',
-        ping2:     '20ms',
-        ping3:     '200 OK'
-      });
+        state: 'STATE_MONITORING',
+        failures: 0,
+        restarts: currentRestarts + 1,
+        uptime: systemState.uptime,
+        relayOn: false,
+        ping1: '14ms',
+        ping2: '20ms',
+        ping3: '200 OK'
+      };
+      renderDashboard();
       addLog('success', 'OK', 'ok-tag', 'Router back online — resuming STATE_MONITORING.');
     }, 4000);
   }, 3000);
 }
 
 function resetAll() {
-  localUptime = 0;
-  updateDashboard({
+  systemState = {
     connected: true,
-    state:     'STATE_MONITORING',
-    failures:  0,
-    restarts:  0,
-    uptime:    0,
-    relayOn:   false,
-    ping1:     '12ms',
-    ping2:     '18ms',
-    ping3:     '200 OK'
-  });
+    state: 'STATE_MONITORING',
+    failures: 0,
+    restarts: 0,
+    uptime: 0,
+    relayOn: false,
+    ping1: '12ms',
+    ping2: '18ms',
+    ping3: '200 OK'
+  };
+  renderDashboard();
   document.getElementById('event-log').innerHTML = '';
   addLog('info', 'INFO', 'info-tag', 'System reset by user.');
 }
+
+// ── Initialize ──
+renderDashboard();
+addLog('info', 'INFO', 'info-tag', 'Dashboard initialized — ready for input.');
