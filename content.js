@@ -1,9 +1,3 @@
-// ═══════════════════════════════════════════════
-//  Reboot — content.js (Frontend only)
-//  Pure state management + UI updates
-//  No server polling — state driven by buttons
-// ═══════════════════════════════════════════════
-
 // ── System state (single source of truth) ──
 let systemState = {
   connected: true,

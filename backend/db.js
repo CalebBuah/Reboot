@@ -12,7 +12,7 @@ const db = new sqlite3.Database(dbPath, (err) => {
     console.error('❌ Database connection failed:', err.message);
     process.exit(1);
   }
-  console.log('✅ Connected to SQLite database:', dbPath);
+  console.log('Connected to SQLite database:', dbPath);
 });
 
 // Enable foreign keys

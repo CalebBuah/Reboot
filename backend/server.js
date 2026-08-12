@@ -71,13 +71,11 @@ app.use((req, res) => {
 const PORT = config.PORT;
 app.listen(PORT, () => {
   console.log('\n');
-  console.log('╔════════════════════════════════════════╗');
-  console.log('║     Reboot Backend Server Started      ║');
-  console.log('╚════════════════════════════════════════╝');
-  console.log(`📡 Server: http://localhost:${PORT}`);
-  console.log(`🔧 Environment: ${config.NODE_ENV}`);
-  console.log(`💾 Database: ${config.DB_PATH}`);
-  console.log('\n📌 Available Endpoints:');
+  console.log('Reboot Backend Server Started');
+  console.log(`Server: http://localhost:${PORT}`);
+  console.log(`Environment: ${config.NODE_ENV}`);
+  console.log(`Database: ${config.DB_PATH}`);
+  console.log('\nAvailable Endpoints:');
   console.log(`   GET  /health`);
   console.log(`   GET  /api/device/status`);
   console.log(`   GET  /api/device/gpio`);
@@ -92,7 +90,7 @@ app.listen(PORT, () => {
   console.log(`   GET  /api/ping/history`);
   
   if (config.NODE_ENV === 'development') {
-    console.log('\n🔬 Development Simulation Endpoints:');
+    console.log('\n Development Simulation Endpoints:');
     console.log(`   POST /api/simulate/connected`);
     console.log(`   POST /api/simulate/failure`);
     console.log(`   POST /api/simulate/relay_restart`);
@@ -103,6 +101,6 @@ app.listen(PORT, () => {
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\n🛑 Shutting down gracefully...');
+  console.log('\n Shutting down gracefully...');
   process.exit(0);
 });
