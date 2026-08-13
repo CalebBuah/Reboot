@@ -64,10 +64,10 @@ router.post('/heartbeat', async (req, res) => {
       timestamp: new Date().toISOString()
     });
 
-    console.log(`✅ Heartbeat from ESP32: state=${state}, relay=${relay_on}, uptime=${uptime}s`);
+    console.log(`Heartbeat from ESP32: state=${state}, relay=${relay_on}, uptime=${uptime}s`);
 
   } catch (err) {
-    console.error('❌ Heartbeat error:', err);
+    console.error('Heartbeat error:', err);
     res.status(500).json({
       success: false,
       error: err.message
@@ -94,7 +94,7 @@ router.post('/log', async (req, res) => {
       message: 'Log entry created'
     });
 
-    console.log(`📝 ESP32 Log [${level}/${tag}]: ${message}`);
+    console.log(`ESP32 Log [${level}/${tag}]: ${message}`);
 
   } catch (err) {
     console.error('❌ Log error:', err);
