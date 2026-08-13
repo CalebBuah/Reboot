@@ -1,12 +1,9 @@
-// ═══════════════════════════════════════════════
-//  Reboot Backend Server
-//  Main entry point
-// ═══════════════════════════════════════════════
-
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const config = require('./config');
+
+const path = require('path');
 
 // Import routes
 const deviceRoutes = require('./routes/device');
@@ -27,7 +24,7 @@ if (config.NODE_ENV === 'development') {
     origin: config.CORS_ORIGIN,
     credentials: true
   }));
-  console.log('🔓 CORS enabled for development');
+  console.log('CORS enabled for development');
 } else {
   app.use(cors({
     origin: ['http://localhost:5000'],
@@ -35,9 +32,16 @@ if (config.NODE_ENV === 'development') {
   }));
 }
 
+// ── Serve Frontend Static Files ──
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/dashboard.html'));
+});
+
 // ── Global Error Handler ──
 app.use((err, req, res, next) => {
-  console.error('❌ Error:', err.message);
+  console.error('Error:', err.message);
   res.status(500).json({
     status: 'error',
     message: err.message,

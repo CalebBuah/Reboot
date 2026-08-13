@@ -1,8 +1,3 @@
-// ═══════════════════════════════════════════════
-//  Simulation Endpoints (Development Only)
-//  POST /api/simulate/*
-// ═══════════════════════════════════════════════
-
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
@@ -20,7 +15,7 @@ router.use((req, res, next) => {
   next();
 });
 
-// ── POST /api/simulate/connected ──
+// POST /api/simulate/connected
 router.post('/connected', async (req, res) => {
   try {
     await db.updateDeviceStatus({
@@ -43,14 +38,14 @@ router.post('/connected', async (req, res) => {
       message: 'Simulated: Device connected'
     });
 
-    console.log('🟢 [SIM] Connected');
+    console.log('[SIM] Connected');
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ── POST /api/simulate/failure ──
+// POST /api/simulate/failure
 router.post('/failure', async (req, res) => {
   try {
     await db.updateDeviceStatus({
@@ -73,14 +68,14 @@ router.post('/failure', async (req, res) => {
       message: 'Simulated: Connectivity failure'
     });
 
-    console.log('🔴 [SIM] Failure');
+    console.log('[SIM] Failure');
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// ── POST /api/simulate/relay_restart ──
+// POST /api/simulate/relay_restart
 router.post('/relay_restart', async (req, res) => {
   try {
     await db.updateDeviceStatus({
@@ -99,9 +94,8 @@ router.post('/relay_restart', async (req, res) => {
       step: 1
     });
 
-    console.log('🔵 [SIM] Relay ON');
+    console.log('[SIM] Relay ON');
 
-    // Step 2: After 3s, relay off
     setTimeout(async () => {
       try {
         const status = await db.getDeviceStatus();
@@ -113,13 +107,12 @@ router.post('/relay_restart', async (req, res) => {
           last_heartbeat: new Date().toISOString()
         });
         await db.addLog('info', 'RELAY', 'Simulated: Relay off — GPIO 5 LOW. Waiting for router boot.', 'SIMULATE');
-        console.log('⚪ [SIM] Relay OFF (waiting)');
+        console.log('[SIM] Relay OFF (waiting)');
       } catch (err) {
         console.error('Error in relay off:', err);
       }
     }, 3000);
 
-    // Step 3: After 7s total, router back online
     setTimeout(async () => {
       try {
         await db.updateDeviceStatus({
@@ -135,7 +128,7 @@ router.post('/relay_restart', async (req, res) => {
         });
         await db.addPingResult(config.PING_TARGET, 14, true);
         await db.addLog('success', 'OK', 'Simulated: Router back online', 'SIMULATE');
-        console.log('🟢 [SIM] Router online');
+        console.log('[SIM] Router online');
       } catch (err) {
         console.error('Error in recovery:', err);
       }
@@ -146,7 +139,7 @@ router.post('/relay_restart', async (req, res) => {
   }
 });
 
-// ── POST /api/simulate/reset ──
+// POST /api/simulate/reset
 router.post('/reset', async (req, res) => {
   try {
     await db.updateDeviceStatus({
@@ -169,7 +162,7 @@ router.post('/reset', async (req, res) => {
       message: 'Simulated: System reset'
     });
 
-    console.log('🔄 [SIM] Reset');
+    console.log('[SIM] Reset');
 
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
