@@ -19,6 +19,7 @@ BackendClient backendClient;
 
 unsigned long lastHeartbeat = 0;
 unsigned long lastPing = 0;
+unsigned long lastCommandCheck = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -40,13 +41,13 @@ void setup() {
   stateManager.setState(STATE_MONITORING);
 
   // Test: Try to connect to PC IP directly
-WiFiClient testClient;
-if (testClient.connect("192.168.100.2", 5000)) {
-  Serial.println("SUCCESS: Can connect to PC:5000");
-  testClient.stop();
-} else {
-  Serial.println("FAILED: Cannot connect to PC:5000");
-}
+  WiFiClient testClient;
+  if (testClient.connect("192.168.100.2", 5000)) {
+    Serial.println("SUCCESS: Can connect to PC:5000");
+    testClient.stop();
+  } else {
+    Serial.println("FAILED: Cannot connect to PC:5000");
+  }
 }
 
 void loop() {
@@ -64,8 +65,18 @@ void loop() {
     sendHeartbeat();
   }
   
+  // Check for pending commands every 10 seconds
+  if (now - lastCommandCheck >= 35000) {
+    lastCommandCheck = now;
+    checkForCommands();
+  }
+  
   // Handle relay timing
   relayControl.update();
+  
+  // Update LEDs based on current state
+  bool isConnected = (stateManager.getState() == STATE_MONITORING);
+  relayControl.updateLeds(isConnected);
   
   delay(100); // Small delay to prevent watchdog timeout
 }
@@ -156,5 +167,35 @@ void sendHeartbeat() {
     }
   } else {
     Serial.println("Failed to send heartbeat");
+  }
+}
+
+void checkForCommands() {
+  String command;
+  int commandId;
+  
+  Serial.println("Polling for commands...");
+  
+  if (backendClient.getCommand(command, commandId)) {
+    Serial.print("Received command: ");
+    Serial.println(command);
+    Serial.print("Command ID: ");
+    Serial.println(commandId);
+    
+    if (command == "RESTART_RELAY") {
+      Serial.println("Executing RESTART_RELAY command...");
+      stateManager.setState(STATE_RECOVERING);
+      relayControl.activate();
+      Serial.println("Relay activated!");
+      
+      // Confirm execution
+      if (backendClient.completeCommand(commandId)) {
+        Serial.println("Command execution confirmed to backend");
+      } else {
+        Serial.println("Failed to confirm command to backend");
+      }
+    }
+  } else {
+    Serial.println("No commands available");
   }
 }

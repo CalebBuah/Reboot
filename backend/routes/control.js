@@ -9,10 +9,12 @@ const db = require('../db');
 const config = require('../config');
 
 // ── POST /api/relay/restart ──
+// Trigger a manual relay restart
 router.post('/relay/restart', async (req, res) => {
   try {
     const { reason = 'USER_MANUAL' } = req.body;
 
+    // Check restart limit
     const restartCount = await db.getRestartCountThisHour();
     
     if (restartCount >= config.RESTART_LIMIT_PER_HOUR) {
@@ -31,20 +33,22 @@ router.post('/relay/restart', async (req, res) => {
       });
     }
 
-    await db.addRelayEvent('ACTIVATED', reason, true, `Manual restart triggered by user`);
-    await db.addLog('info', 'RELAY', 'Manual restart requested', 'USER');
+    // Create pending command for ESP32
+    await db.addCommand('RESTART_RELAY');
+    await db.addRelayEvent('ACTIVATION_REQUESTED', reason, true, `Restart requested by ${reason}`);
+    await db.addLog('info', 'RELAY', `Manual restart requested (${reason})`, 'USER');
 
     res.json({
       success: true,
-      message: 'Relay restart command sent to ESP32',
+      message: 'Relay restart command queued',
       restarts_this_hour: restartCount + 1,
       limit: config.RESTART_LIMIT_PER_HOUR
     });
 
-    console.log(`🔄 Manual relay restart triggered: ${reason}`);
+    console.log(`Relay restart queued: ${reason}`);
 
   } catch (err) {
-    console.error('❌ Restart error:', err);
+    console.error('Restart error:', err);
     res.status(500).json({
       status: 'error',
       message: err.message,
@@ -54,6 +58,7 @@ router.post('/relay/restart', async (req, res) => {
 });
 
 // ── POST /api/device/reset ──
+// Reset all counters and state (backend only)
 router.post('/device/reset', async (req, res) => {
   try {
     await db.updateDeviceStatus({
@@ -72,10 +77,10 @@ router.post('/device/reset', async (req, res) => {
       message: 'Device state reset'
     });
 
-    console.log('🔄 Device reset');
+    console.log('Device reset');
 
   } catch (err) {
-    console.error('❌ Reset error:', err);
+    console.error('Reset error:', err);
     res.status(500).json({
       status: 'error',
       message: err.message,

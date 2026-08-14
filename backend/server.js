@@ -79,6 +79,7 @@ app.listen(PORT, () => {
   console.log(`Server: http://localhost:${PORT}`);
   console.log(`Environment: ${config.NODE_ENV}`);
   console.log(`Database: ${config.DB_PATH}`);
+  /* 
   console.log('\nAvailable Endpoints:');
   console.log(`   GET  /health`);
   console.log(`   GET  /api/device/status`);
@@ -100,7 +101,7 @@ app.listen(PORT, () => {
     console.log(`   POST /api/simulate/relay_restart`);
     console.log(`   POST /api/simulate/reset`);
   }
-  console.log('\n');
+  console.log('\n'); */
 });
 
 // Graceful shutdown

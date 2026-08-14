@@ -169,6 +169,40 @@ function formatDeviceStatus(row) {
     is_offline: isOffline
   };
 }
+// ── Commands ──
+async function getPendingCommand() {
+  return dbGet(`
+    SELECT * FROM device_commands 
+    WHERE status = 'PENDING' 
+    ORDER BY id ASC 
+    LIMIT 1
+  `);
+}
+
+async function addCommand(command) {
+  const sql = `
+    INSERT INTO device_commands (command, status, created_at)
+    VALUES (?, 'PENDING', CURRENT_TIMESTAMP)
+  `;
+  return dbRun(sql, [command]);
+}
+
+async function completeCommand(commandId) {
+  const sql = `
+    UPDATE device_commands 
+    SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP 
+    WHERE id = ?
+  `;
+  return dbRun(sql, [commandId]);
+}
+
+async function getCommandHistory(limit = 20) {
+  return dbAll(`
+    SELECT * FROM device_commands 
+    ORDER BY id DESC 
+    LIMIT ?
+  `, [limit]);
+}
 
 // ── Export ──
 module.exports = {
@@ -187,5 +221,9 @@ module.exports = {
   getDeviceConfig,
   updateDeviceConfig,
   getRestartCountThisHour,
-  formatDeviceStatus
+  formatDeviceStatus,
+  getPendingCommand,
+  addCommand,
+  completeCommand,
+  getCommandHistory
 };

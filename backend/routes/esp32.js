@@ -75,6 +75,69 @@ router.post('/heartbeat', async (req, res) => {
   }
 });
 
+// ── POST /api/esp32/command ──
+// ESP32 polls for pending commands
+router.post('/command', async (req, res) => {
+  try {
+    const pendingCommand = await db.getPendingCommand();
+    
+    if (!pendingCommand) {
+      return res.json({
+        success: true,
+        command: null,
+        message: 'No pending commands'
+      });
+    }
+    
+    res.json({
+      success: true,
+      command_id: pendingCommand.id,
+      command: pendingCommand.command
+    });
+    
+    console.log(`Command queued: ${pendingCommand.command}`);
+    
+  } catch (err) {
+    console.error('Command fetch error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
+// ── POST /api/esp32/command-complete ──
+// ESP32 confirms command execution
+router.post('/command-complete', async (req, res) => {
+  try {
+    const { command_id } = req.body;
+    
+    if (!command_id) {
+      return res.status(400).json({
+        success: false,
+        error: 'Missing command_id'
+      });
+    }
+    
+    await db.completeCommand(command_id);
+    await db.addLog('info', 'RELAY', 'Command executed successfully', 'ESP32');
+    
+    res.json({
+      success: true,
+      message: 'Command marked complete'
+    });
+    
+    console.log(`Command ${command_id} completed`);
+    
+  } catch (err) {
+    console.error('Command complete error:', err);
+    res.status(500).json({
+      success: false,
+      error: err.message
+    });
+  }
+});
+
 // ── POST /api/esp32/log ──
 router.post('/log', async (req, res) => {
   try {

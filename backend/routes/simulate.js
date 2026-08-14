@@ -75,9 +75,13 @@ router.post('/failure', async (req, res) => {
   }
 });
 
-// POST /api/simulate/relay_restart
+// ── POST /api/simulate/relay_restart ──
 router.post('/relay_restart', async (req, res) => {
   try {
+    // Create pending command for ESP32
+    await db.addCommand('RESTART_RELAY');
+    
+    // Step 1: Relay activates
     await db.updateDeviceStatus({
       state: 'STATE_RECOVERING',
       relay_on: 1,
@@ -94,8 +98,9 @@ router.post('/relay_restart', async (req, res) => {
       step: 1
     });
 
-    console.log('[SIM] Relay ON');
+    console.log('Relay restart queued via simulation');
 
+    // Step 2: After 3s, relay off
     setTimeout(async () => {
       try {
         const status = await db.getDeviceStatus();
@@ -107,12 +112,13 @@ router.post('/relay_restart', async (req, res) => {
           last_heartbeat: new Date().toISOString()
         });
         await db.addLog('info', 'RELAY', 'Simulated: Relay off — GPIO 5 LOW. Waiting for router boot.', 'SIMULATE');
-        console.log('[SIM] Relay OFF (waiting)');
+        console.log('Relay OFF (waiting)');
       } catch (err) {
         console.error('Error in relay off:', err);
       }
     }, 3000);
 
+    // Step 3: After 7s total, router back online
     setTimeout(async () => {
       try {
         await db.updateDeviceStatus({
@@ -128,7 +134,7 @@ router.post('/relay_restart', async (req, res) => {
         });
         await db.addPingResult(config.PING_TARGET, 14, true);
         await db.addLog('success', 'OK', 'Simulated: Router back online', 'SIMULATE');
-        console.log('[SIM] Router online');
+        console.log('Router online');
       } catch (err) {
         console.error('Error in recovery:', err);
       }
