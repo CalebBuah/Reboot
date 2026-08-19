@@ -6,17 +6,17 @@
 #define CONFIG_H
 
 // WiFi Configuration
-#define WIFI_SSID "HUAWEI-2.4G-NdC2"
-#define WIFI_PASSWORD "nhzncH8X"
+#define WIFI_SSID "Redmi A2+"
+#define WIFI_PASSWORD "4321432126"
 
 // Backend Configuration
-#define BACKEND_URL "http://192.168.100.2:5000"
+#define BACKEND_URL "http://192.168.210.88:5000"
 #define BACKEND_HEARTBEAT_ENDPOINT "/api/esp32/heartbeat"
 #define BACKEND_LOG_ENDPOINT "/api/esp32/log"
 
 // Ping Configuration
 #define PING_TARGET "8.8.8.8"
-#define PING_INTERVAL_MS 30000      // 30 seconds
+#define PING_INTERVAL_MS 5000      // 30 seconds
 #define FAILURE_THRESHOLD 3         // 3 consecutive failures
 #define PING_TIMEOUT_MS 5000        // 5 second timeout per ping
 
@@ -25,7 +25,7 @@
 #define RELAY_OFF_WAIT_MS 60000     // 60 second boot time
 
 // Heartbeat Configuration
-#define HEARTBEAT_INTERVAL_MS 30000 // 30 seconds
+#define HEARTBEAT_INTERVAL_MS 5000 // 30 seconds
 
 // GPIO Pin Assignments
 #define RELAY_PIN 5

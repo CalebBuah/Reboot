@@ -62,9 +62,7 @@ public:
   
   void recordFailedPing() {
     failureCount++;
-    if (failureCount >= FAILURE_THRESHOLD) {
-      setState(STATE_FAILURE_DETECTED);
-    }
+
   }
   
   int getFailureCount() {

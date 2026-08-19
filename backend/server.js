@@ -11,6 +11,7 @@ const esp32Routes = require('./routes/esp32');
 const controlRoutes = require('./routes/control');
 const logsRoutes = require('./routes/logs');
 const simulateRoutes = require('./routes/simulate');
+const diagnosticsRoutes = require('./routes/diagnostics');
 
 const app = express();
 
@@ -55,6 +56,7 @@ app.use('/api/esp32', esp32Routes);
 app.use('/api', controlRoutes);
 app.use('/api', logsRoutes);
 app.use('/api/simulate', simulateRoutes);
+app.use('/', diagnosticsRoutes);
 
 // ── Health check ──
 app.get('/health', (req, res) => {

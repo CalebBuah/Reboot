@@ -8,18 +8,24 @@
 #include <ArduinoJson.h>
 #include "config.h"
 #include "StateManager.h"
-#include "PingMonitor.h"
+#include "DiagnosticEngine.h"
 #include "RelayControl.h"
 #include "BackendClient.h"
 
 StateManager stateManager;
-PingMonitor pingMonitor;
+DiagnosticEngine diagnosticEngine;  // ← CHANGED from pingMonitor
+DiagnosticReport lastDiagnosticReport;
 RelayControl relayControl;
 BackendClient backendClient;
+HTTPClient http;
+
+bool lastPingSuccess = false;  // ← NEW: Track if last ping succeeded
+int lastPingLatency = 0; 
 
 unsigned long lastHeartbeat = 0;
 unsigned long lastPing = 0;
 unsigned long lastCommandCheck = 0;
+unsigned long lastSyncCheck = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -34,8 +40,7 @@ void setup() {
   // Connect to WiFi
   connectToWiFi();
   
-  // Initialize ping monitor
-  pingMonitor.init();
+
   
   Serial.println("Setup complete. Entering monitoring state.");
   stateManager.setState(STATE_MONITORING);
@@ -53,23 +58,29 @@ void setup() {
 void loop() {
   unsigned long now = millis();
   
-  // Perform ping check every 30 seconds
+  // Perform ping check every 5 seconds
   if (now - lastPing >= PING_INTERVAL_MS) {
     lastPing = now;
     handlePingCheck();
   }
   
-  // Send heartbeat to backend every 30 seconds
+  // Send heartbeat to backend every 5 seconds
   if (now - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
     lastHeartbeat = now;
     sendHeartbeat();
   }
   
   // Check for pending commands every 10 seconds
-  if (now - lastCommandCheck >= 35000) {
+  if (now - lastCommandCheck >= 10000) {
     lastCommandCheck = now;
     checkForCommands();
   }
+  
+  // // Sync state with backend every 30 seconds
+  // if (now - lastSyncCheck >= 30000) {
+  //   lastSyncCheck = now;
+  //   syncWithBackend();
+  // }
   
   // Handle relay timing
   relayControl.update();
@@ -105,28 +116,58 @@ void connectToWiFi() {
 }
 
 void handlePingCheck() {
-  bool pingSuccess = pingMonitor.ping(PING_TARGET);
-  int latency = pingMonitor.getLatency();
+  // Don't ping if relay is active - router is powered off anyway
+  if (relayControl.isActive()) {
+    Serial.println("Relay active, skipping ping check");
+    return;
+  }
   
-  if (pingSuccess) {
-    Serial.print("Ping success: ");
+  // Simple connectivity check using DNS server ping
+  WiFiClient client;
+  unsigned long startTime = millis();
+  
+  if (client.connect("8.8.8.8", 53)) {
+    int latency = millis() - startTime;
+    
+    Serial.print("Ping successful: ");
     Serial.print(latency);
     Serial.println("ms");
-    pingMonitor.recordSuccess(latency);
+    
+    lastPingSuccess = true;      // ← NEW
+    lastPingLatency = latency;
     stateManager.recordSuccessfulPing();
   } else {
     Serial.println("Ping failed");
-    pingMonitor.recordFailure();
+    lastPingSuccess = false;     // ← NEW
+    lastPingLatency = 0;  
     stateManager.recordFailedPing();
   }
   
-  // Check if we've exceeded failure threshold
-  if (stateManager.getFailureCount() >= FAILURE_THRESHOLD) {
-    if (stateManager.getState() == STATE_MONITORING) {
-      Serial.println("Failure threshold reached! Triggering relay...");
-      stateManager.setState(STATE_RECOVERING);
-      relayControl.activate();
+  client.stop();
+  
+  // Check if we've exceeded failure threshold AND we're still monitoring
+  if (stateManager.getFailureCount() >= FAILURE_THRESHOLD && 
+      stateManager.getState() == STATE_MONITORING) {
+    
+    Serial.println("Failure threshold reached! Running diagnostics...");
+    
+    // ← Run diagnostics when failure detected
+    lastDiagnosticReport = diagnosticEngine.runFullDiagnostics();
+    diagnosticEngine.printDiagnosticReport(lastDiagnosticReport);
+    
+    // ← NEW: Send diagnostic to backend
+    Serial.println("\nSending diagnostic to backend...");
+    if (backendClient.sendDiagnosticReport(lastDiagnosticReport)) {
+      Serial.println("Diagnostic sent to backend successfully");
+    } else {
+      Serial.println("Failed to send diagnostic to backend");
     }
+    
+    // Now activate relay
+    Serial.println("\nActivating relay...");
+    stateManager.setState(STATE_RECOVERING);
+    relayControl.activate();
+    Serial.println("Relay activated!");
   }
 }
 
@@ -146,8 +187,17 @@ void sendHeartbeat() {
   doc["gpio13"] = relayControl.getLedGreen();
   doc["gpio14"] = relayControl.getLedRed();
   doc["gpio15"] = relayControl.getLedBlue();
-  doc["ping_latency_ms"] = pingMonitor.getLatency();
+  doc["ping_latency_ms"] = (lastDiagnosticReport.latency_ms > 0) ? lastDiagnosticReport.latency_ms : 0;
   doc["ping_success"] = stateManager.getState() == STATE_MONITORING;
+  
+  // Add diagnostic data if available
+  if (lastDiagnosticReport.layer_failed > 0) {
+    JsonObject diag = doc.createNestedObject("diagnostic");
+    diag["root_cause"] = lastDiagnosticReport.root_cause;
+    diag["layer_failed"] = lastDiagnosticReport.layer_failed;
+    diag["latency_ms"] = lastDiagnosticReport.latency_ms;
+    diag["timestamp"] = lastDiagnosticReport.timestamp;
+  }
   
   String payload;
   serializeJson(doc, payload);
@@ -156,13 +206,18 @@ void sendHeartbeat() {
     Serial.println("Heartbeat sent successfully");
     
     // Handle state transitions
+       // Handle state transitions
     if (stateManager.getState() == STATE_RECOVERING) {
       stateManager.setState(STATE_RECOVERY_WAIT);
-    } else if (stateManager.getState() == STATE_RECOVERY_WAIT) {
+      Serial.println("State: RECOVERING → RECOVERY_WAIT (waiting for router to boot)");
+    } 
+    else if (stateManager.getState() == STATE_RECOVERY_WAIT) {
       // Check if ping is successful after relay cycle
-      if (pingMonitor.getLatency() > 0 && stateManager.getState() == STATE_RECOVERY_WAIT) {
+      if (lastPingSuccess) {  // ← FIXED: Check actual ping, not old diagnostic
+        Serial.println("Recovery successful! Ping succeeded after relay cycle");
         stateManager.setState(STATE_MONITORING);
         stateManager.recordRestartCount();
+        Serial.println("State: RECOVERY_WAIT → MONITORING (system recovered)");
       }
     }
   } else {
@@ -199,3 +254,38 @@ void checkForCommands() {
     Serial.println("No commands available");
   }
 }
+// void syncWithBackend() {
+//   if (WiFi.status() != WL_CONNECTED) {
+//     Serial.println("WiFi disconnected, skipping sync");
+//     return;
+//   }
+  
+//   String url = BACKEND_URL;
+//   url += "/api/device/status";
+  
+//   http.begin(url);
+//   http.addHeader("Content-Type", "application/json");
+  
+//   int httpCode = http.GET();
+  
+//   if (httpCode == 200) {
+//     String response = http.getString();
+    
+//     StaticJsonDocument<512> doc;
+//     DeserializationError error = deserializeJson(doc, response);
+    
+//     if (!error) {
+//       int backendFailureCount = doc["failure_count"];
+      
+//       // Only reset if backend is at 0 AND relay is NOT active
+//       // If relay is active, don't interfere with the recovery process
+//       if (backendFailureCount == 0 && stateManager.getFailureCount() > 0 && !relayControl.isActive()) {
+//         Serial.println("Backend reset detected, resetting ESP32 state...");
+//         stateManager.init();
+//         Serial.println("State reset to STATE_MONITORING");
+//       }
+//     }
+//   }
+  
+//   http.end();
+// }

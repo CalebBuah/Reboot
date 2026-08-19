@@ -204,6 +204,185 @@ async function getCommandHistory(limit = 20) {
   `, [limit]);
 }
 
+// ────── DIAGNOSTICS FUNCTIONS ──────
+
+async function addDiagnosticResult(diagnosticReport) {
+  const sql = `
+    INSERT INTO diagnostic_results 
+    (timestamp, root_cause, layer_failed, latency_ms, details)
+    VALUES (?, ?, ?, ?, ?)
+  `;
+  
+  try {
+    const result = await dbRun(sql, [
+      diagnosticReport.timestamp || new Date().toISOString(),
+      diagnosticReport.rootCause,
+      diagnosticReport.layerFailed || 0,
+      diagnosticReport.latencyMs || 0,
+      JSON.stringify(diagnosticReport.details || {})
+    ]);
+    return result;
+  } catch (err) {
+    console.error('Error adding diagnostic:', err);
+    throw err;
+  }
+}
+
+async function getDiagnosticHistory(limit = 20) {
+  const sql = `
+    SELECT * FROM diagnostic_results 
+    ORDER BY timestamp DESC 
+    LIMIT ?
+  `;
+  
+  try {
+    return await dbAll(sql, [limit]);
+  } catch (err) {
+    console.error('Error getting diagnostic history:', err);
+    throw err;
+  }
+}
+
+async function getLatestDiagnostic() {
+  const sql = `
+    SELECT * FROM diagnostic_results 
+    ORDER BY timestamp DESC 
+    LIMIT 1
+  `;
+  
+  try {
+    return await dbGet(sql, []);
+  } catch (err) {
+    console.error('Error getting latest diagnostic:', err);
+    throw err;
+  }
+}
+
+// ────── ANALYTICS FUNCTIONS ──────
+
+async function updateDailyMetrics(date, metrics) {
+  const sql = `
+    INSERT OR REPLACE INTO daily_metrics 
+    (date, uptime_percent, failure_count, mtbf_hours, mttr_minutes, 
+     total_restart_time_minutes, wifi_failures, local_failures, 
+     isp_failures, dns_failures, content_failures, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+  `;
+  
+  try {
+    return await dbRun(sql, [
+      date,
+      metrics.uptime_percent || 0,
+      metrics.failure_count || 0,
+      metrics.mtbf_hours || 0,
+      metrics.mttr_minutes || 0,
+      metrics.total_restart_time_minutes || 0,
+      metrics.wifi_failures || 0,
+      metrics.local_failures || 0,
+      metrics.isp_failures || 0,
+      metrics.dns_failures || 0,
+      metrics.content_failures || 0
+    ]);
+  } catch (err) {
+    console.error('Error updating daily metrics:', err);
+    throw err;
+  }
+}
+
+async function getDailyMetrics(days = 7) {
+  const sql = `
+    SELECT * FROM daily_metrics 
+    WHERE date >= date('now', '-' || ? || ' days')
+    ORDER BY date ASC
+  `;
+  
+  try {
+    return await dbAll(sql, [days]);
+  } catch (err) {
+    console.error('Error getting daily metrics:', err);
+    throw err;
+  }
+}
+
+async function getReliabilityMetrics(days = 7) {
+  const metrics = await getDailyMetrics(days);
+  
+  if (metrics.length === 0) {
+    return {
+      uptime_percent: 0,
+      avg_mtbf_hours: 0,
+      avg_mttr_minutes: 0,
+      total_failures: 0
+    };
+  }
+  
+  const avgUptime = (metrics.reduce((sum, m) => sum + m.uptime_percent, 0) / metrics.length).toFixed(2);
+  const avgMTBF = (metrics.reduce((sum, m) => sum + m.mtbf_hours, 0) / metrics.length).toFixed(2);
+  const avgMTTR = (metrics.reduce((sum, m) => sum + m.mttr_minutes, 0) / metrics.length).toFixed(2);
+  const totalFailures = metrics.reduce((sum, m) => sum + m.failure_count, 0);
+  
+  return {
+    uptime_percent: parseFloat(avgUptime),
+    avg_mtbf_hours: parseFloat(avgMTBF),
+    avg_mttr_minutes: parseFloat(avgMTTR),
+    total_failures: totalFailures,
+    days: days
+  };
+}
+
+async function getFailurePatterns(days = 7) {
+  const metrics = await getDailyMetrics(days);
+  
+  if (metrics.length === 0) {
+    return {
+      wifi: 0,
+      local: 0,
+      isp: 0,
+      dns: 0,
+      content: 0,
+      total: 0
+    };
+  }
+  
+  const totals = {
+    wifi: metrics.reduce((sum, m) => sum + (m.wifi_failures || 0), 0),
+    local: metrics.reduce((sum, m) => sum + (m.local_failures || 0), 0),
+    isp: metrics.reduce((sum, m) => sum + (m.isp_failures || 0), 0),
+    dns: metrics.reduce((sum, m) => sum + (m.dns_failures || 0), 0),
+    content: metrics.reduce((sum, m) => sum + (m.content_failures || 0), 0)
+  };
+  
+  totals.total = Object.values(totals).reduce((a, b) => a + b, 0);
+  
+  // Convert to percentages
+  if (totals.total > 0) {
+    return {
+      wifi: ((totals.wifi / totals.total) * 100).toFixed(1),
+      local: ((totals.local / totals.total) * 100).toFixed(1),
+      isp: ((totals.isp / totals.total) * 100).toFixed(1),
+      dns: ((totals.dns / totals.total) * 100).toFixed(1),
+      content: ((totals.content / totals.total) * 100).toFixed(1),
+      total: totals.total
+    };
+  }
+  
+  return totals;
+}
+
+async function cleanupOldDiagnostics(daysToKeep = 30) {
+  const sql = `
+    DELETE FROM diagnostic_results 
+    WHERE timestamp < datetime('now', '-' || ? || ' days')
+  `;
+  
+  try {
+    return await dbRun(sql, [daysToKeep]);
+  } catch (err) {
+    console.error('Error cleaning up diagnostics:', err);
+    throw err;
+  }
+}
+
 // ── Export ──
 module.exports = {
   db,
@@ -225,5 +404,19 @@ module.exports = {
   getPendingCommand,
   addCommand,
   completeCommand,
-  getCommandHistory
+  getCommandHistory,
+
+
+    // New diagnostic functions
+  addDiagnosticResult,
+  getDiagnosticHistory,
+  getLatestDiagnostic,
+  
+  // New analytics functions
+  updateDailyMetrics,
+  getDailyMetrics,
+  getReliabilityMetrics,
+  getFailurePatterns,
+  cleanupOldDiagnostics
 };
+

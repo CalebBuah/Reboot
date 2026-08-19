@@ -180,6 +180,62 @@ public:
     
     return (httpCode > 0);
   }
+
+    // ────── Send Diagnostic Report ──────
+  bool sendDiagnosticReport(DiagnosticReport& report) {
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("WiFi not connected, cannot send diagnostic");
+      return false;
+    }
+    
+    String url = BACKEND_URL;
+    url += "/api/esp32/diagnostic";
+    
+    Serial.print("Sending diagnostic to: ");
+    Serial.println(url);
+    
+    // Create JSON payload
+    StaticJsonDocument<256> doc;
+    doc["root_cause"] = report.root_cause;
+    doc["layer_failed"] = report.layer_failed;
+    doc["latency_ms"] = report.latency_ms;
+    doc["timestamp"] = report.timestamp;
+    
+    // Add layer details
+    for (int i = 0; i < 5; i++) {
+      String layerKey = "layer" + String(i + 1);
+      doc[layerKey] = report.layers[i].success ? "pass" : "fail";
+    }
+    
+    String payload;
+    serializeJson(doc, payload);
+    
+    Serial.print("Diagnostic payload: ");
+    Serial.println(payload);
+    
+    // Send POST request
+    resetHTTPClient();
+    http.begin(url);
+    http.addHeader("Content-Type", "application/json");
+    
+    int httpCode = http.POST(payload);
+    
+    Serial.print("Diagnostic HTTP Code: ");
+    Serial.println(httpCode);
+    
+    if (httpCode == 200) {
+      String response = http.getString();
+      Serial.println("Diagnostic sent successfully");
+      Serial.println(response);
+      http.end();
+      return true;
+    } else {
+      Serial.print("Diagnostic send failed: ");
+      Serial.println(httpCode);
+      http.end();
+      return false;
+    }
+  }
 };
 
 #endif // BACKEND_CLIENT_H
