@@ -1,0 +1,52 @@
+TABLE 1: diagnostic_results
+Purpose: Store diagnostic reports when failures occur
+Columns:
+├─ id INTEGER PRIMARY KEY
+├─ timestamp DATETIME (when diagnostic ran)
+├─ root_cause TEXT (WiFi / LocalNetwork / ISP / DNS / Content / Unknown)
+├─ layer_failed INTEGER (1-5, which layer failed first)
+├─ latency_ms INTEGER (latency of last successful layer)
+├─ details TEXT (JSON with details of each layer)
+└─ verified BOOLEAN (did user confirm diagnosis was correct?)
+
+Example row:
+├─ id: 1
+├─ timestamp: 2026-08-18 14:30:45
+├─ root_cause: ISP_DOWN
+├─ layer_failed: 3
+├─ latency_ms: 0
+├─ details: {"layer1": "pass", "layer2": "pass", "layer3": "fail"}
+└─ verified: 1 (yes, user confirmed ISP was actually down)
+
+
+TABLE 2: daily_metrics
+Purpose: Store daily summaries (calculated once per day)
+Columns:
+├─ id INTEGER PRIMARY KEY
+├─ date DATE (day this metric is for)
+├─ uptime_percent FLOAT (98.5)
+├─ failure_count INTEGER (2 failures that day)
+├─ mtbf_hours FLOAT (72.5 = avg time between failures)
+├─ mttr_minutes FLOAT (2.3 = avg recovery time)
+├─ total_restart_time_minutes INTEGER (total relay was on)
+├─ wifi_failures INTEGER (count of WiFi root causes)
+├─ local_failures INTEGER (count of Local network root causes)
+├─ isp_failures INTEGER (count of ISP root causes)
+├─ dns_failures INTEGER (count of DNS root causes)
+├─ content_failures INTEGER (count of Content root causes)
+└─ created_at DATETIME (when this metric was calculated)
+
+Example row:
+├─ id: 1
+├─ date: 2026-08-18
+├─ uptime_percent: 98.2
+├─ failure_count: 2
+├─ mtbf_hours: 72.0
+├─ mttr_minutes: 2.5
+├─ total_restart_time_minutes: 20
+├─ wifi_failures: 0
+├─ local_failures: 0
+├─ isp_failures: 2
+├─ dns_failures: 0
+├─ content_failures: 0
+└─ created_at: 2026-08-19 00:05:00 (calculated at midnight)

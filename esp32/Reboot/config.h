@@ -5,13 +5,26 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+<<<<<<< HEAD
 #include "config.local.h"
 
 // WiFi Configuration
+=======
+// WiFi Configuration
+#define WIFI_SSID "Redmi A2+"
+#define WIFI_PASSWORD "4321432126"
+
+// Backend Configuration
+#define BACKEND_URL "http://192.168.210.88:5000"
+>>>>>>> 46052d36ae8f62eaeb55ed8120faed401bc1393b
 #define BACKEND_HEARTBEAT_ENDPOINT "/api/esp32/heartbeat"
 #define BACKEND_LOG_ENDPOINT "/api/esp32/log"
 
 // Ping Configuration
+<<<<<<< HEAD
+=======
+#define PING_TARGET "8.8.8.8"
+>>>>>>> 46052d36ae8f62eaeb55ed8120faed401bc1393b
 #define PING_INTERVAL_MS 5000      // 30 seconds
 #define FAILURE_THRESHOLD 3         // 3 consecutive failures
 #define PING_TIMEOUT_MS 5000        // 5 second timeout per ping
