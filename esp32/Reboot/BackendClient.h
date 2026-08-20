@@ -41,6 +41,7 @@ public:
       
       http.begin(url);
       http.addHeader("Content-Type", "application/json");
+      http.addHeader("X-Device-Token", BACKEND_API_TOKEN);
       
       int httpCode = http.POST(payload);
       
@@ -83,6 +84,7 @@ public:
     
     http.begin(url);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-Device-Token", BACKEND_API_TOKEN);
     
     int httpCode = http.POST("");
     
@@ -145,6 +147,7 @@ public:
     
     http.begin(url);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-Device-Token", BACKEND_API_TOKEN);
     
     int httpCode = http.POST(payload);
     
@@ -174,6 +177,7 @@ public:
     
     http.begin(url);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-Device-Token", BACKEND_API_TOKEN);
     
     int httpCode = http.POST(payload);
     http.end();

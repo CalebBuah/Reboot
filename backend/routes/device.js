@@ -43,12 +43,40 @@ router.get('/config', async (req, res) => {
   }
 });
 
+// ── PATCH /api/device/config ──
+router.patch('/config', async (req, res) => {
+  try {
+    const allowed = ['ping_interval', 'failure_threshold', 'relay_duration_ms', 'restart_limit_per_hour'];
+    const updates = {};
+
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        const value = Number(req.body[key]);
+        if (!Number.isInteger(value) || value <= 0) {
+          return res.status(400).json({ success: false, error: `${key} must be a positive integer` });
+        }
+        updates[key] = value;
+      }
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, error: 'No editable settings supplied' });
+    }
+
+    await db.updateDeviceConfig(updates);
+    await db.addLog('info', 'CONFIG', 'Device configuration updated', 'USER');
+    res.json({ success: true, config: await db.getDeviceConfig() });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // ── GET /api/device/connectivity ──
 router.get('/connectivity', async (req, res) => {
   try {
     const status = await db.getDeviceStatus();
     const isOffline = status.last_heartbeat 
-      ? (Date.now() - new Date(status.last_heartbeat).getTime()) > 35000
+      ? (Date.now() - new Date(status.last_heartbeat).getTime()) > config.HEARTBEAT_TIMEOUT_MS
       : true;
     
     res.json({

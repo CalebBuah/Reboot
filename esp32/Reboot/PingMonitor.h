@@ -21,14 +21,12 @@ public:
   }
   
   bool ping(const char* target) {
-    // Simple connectivity check using HTTP HEAD to Google DNS
-    // We'll try to reach 8.8.8.8:53 by attempting an HTTP connection
+    // Check reachability of the configured target's DNS port.
     
     unsigned long startTime = millis();
     
-    // Try to connect to 8.8.8.8 on port 53 (DNS)
     WiFiClient client;
-    bool connected = client.connect("8.8.8.8", 53);
+    bool connected = client.connect(target, 53);
     
     lastLatency = (int)(millis() - startTime);
     

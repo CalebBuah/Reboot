@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logs - Reboot</title>
+  <link rel="stylesheet" href="css/shared.css" />
+  <link rel="stylesheet" href="css/content.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <nav class="navbar"><div class="navbar-container"><a href="dashboard.html" class="navbar-logo"><span class="navbar-logo-icon">R</span><span class="navbar-logo-text">Reboot</span></a><button class="navbar-toggle" aria-label="Toggle menu"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button><ul class="navbar-menu"><li><a href="dashboard.html">Home</a></li><li><a href="logs.html" class="active">Logs</a></li><li><a href="settings.html">Settings</a></li><li><a href="about.html">About</a></li><li><a href="signin.html" class="nav-signout" id="signout-link">Sign Out</a></li></ul></div></nav>
+  <main class="main-content">
+    <div class="page-header"><div><h1 class="page-title">System logs</h1><p class="page-sub">Review device, relay, and backend activity.</p></div><button class="hbtn prim" id="refresh-logs">Refresh</button></div>
+    <div class="panel"><div class="panel-header"><span class="panel-title">Recent events</span><span class="panel-tag" id="log-count">Loading</span></div><div class="log-wrap log-page-wrap" id="log-list"></div></div>
+    <div class="panel page-panel"><div class="panel-header"><span class="panel-title">Relay history</span><span class="panel-tag">Recent activations</span></div><div class="log-wrap" id="relay-list"></div></div>
+  </main>
+  <script src="js/utils.js"></script><script src="js/api.js"></script><script src="js/page-nav.js"></script><script src="js/logs.js"></script>
+</body>
+</html>

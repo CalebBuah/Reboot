@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Forgot Password</title>
+  <link rel="stylesheet" href="shared.css" />
+  <link rel="stylesheet" href="forgot.css" />
+</head>
+<body>
+  <div class="orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+  <div class="grid-bg"></div>
+  <div class="wrapper"><div class="card">
+    <div class="brand"><div class="brand-icon">R</div><span class="brand-name">Reboot</span></div>
+    <h1>Forgot password?</h1><p class="subtitle">Enter your email and we'll send you a reset link</p>
+    <form method="post" action="#" id="forgot-form"><div class="field"><label class="field-label" for="reset-email">Email Address</label><input id="reset-email" name="email" type="email" placeholder="jane@example.com" required /></div><button type="submit" class="submit-btn" onclick="handleReset(event)"><span class="btn-shine"></span>Send Reset Link →</button></form>
+    <div class="success-msg" id="success-msg"><p class="success-title">Check your inbox</p><p class="success-sub">We sent a reset link to <strong id="sent-email"></strong></p></div>
+    <form method="post" action="#" id="reset-password-form" class="hidden"><div class="field"><label class="field-label" for="reset-token">Reset token</label><input id="reset-token" type="text" required /></div><div class="field"><label class="field-label" for="replacement-password">New password</label><div class="input-wrap"><input id="replacement-password" type="password" minlength="8" required /><button type="button" class="toggle-pw" data-password-toggle="replacement-password"></button></div></div><button type="submit" class="submit-btn"><span class="btn-shine"></span>Reset Password →</button></form>
+    <p class="bottom-link"><a href="signin.html" class="back-link">← Back to Sign In</a></p>
+  </div></div>
+  <script src="js/form-utils.js"></script>
+  <script src="js/password-toggle.js"></script>
+  <script src="forgot.js"></script>
+</body>
+</html>

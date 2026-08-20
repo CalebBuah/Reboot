@@ -42,11 +42,13 @@ void setup() {
 
   // Test: Try to connect to PC IP directly
   WiFiClient testClient;
-  if (testClient.connect("192.168.100.2", 5000)) {
-    Serial.println("SUCCESS: Can connect to PC:5000");
+  if (testClient.connect(BACKEND_HOST, BACKEND_PORT)) {
+    Serial.print("SUCCESS: Can connect to backend:");
+    Serial.println(BACKEND_PORT);
     testClient.stop();
   } else {
-    Serial.println("FAILED: Cannot connect to PC:5000");
+    Serial.print("FAILED: Cannot connect to backend:");
+    Serial.println(BACKEND_PORT);
   }
 }
 
@@ -66,7 +68,7 @@ void loop() {
   }
   
   // Check for pending commands every 10 seconds
-  if (now - lastCommandCheck >= 35000) {
+  if (now - lastCommandCheck >= HEARTBEAT_INTERVAL_MS) {
     lastCommandCheck = now;
     checkForCommands();
   }
@@ -193,6 +195,15 @@ void checkForCommands() {
         Serial.println("Command execution confirmed to backend");
       } else {
         Serial.println("Failed to confirm command to backend");
+      }
+    } else if (command == "RESET_STATE") {
+      stateManager.resetCounters();
+      relayControl.deactivate();
+      relayControl.updateLeds(false);
+      if (backendClient.completeCommand(commandId)) {
+        Serial.println("State reset confirmed to backend");
+      } else {
+        Serial.println("Failed to confirm state reset to backend");
       }
     }
   } else {

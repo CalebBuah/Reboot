@@ -1,0 +1,155 @@
+
+
+/* Wider card for the longer form */
+.wrapper { max-width: 520px; }
+
+/* ── Two-column row layout ── */
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}  
+
+
+/* ── Staggered field animations ── */
+.field:nth-child(1) { animation-delay: 0.40s; }
+.field:nth-child(2) { animation-delay: 0.45s; }
+.field:nth-child(3) { animation-delay: 0.50s; }
+.field:nth-child(4) { animation-delay: 0.55s; }
+.field:nth-child(5) { animation-delay: 0.60s; }
+.field:nth-child(6) { animation-delay: 0.65s; }
+
+/* ── Plain input (no icon — used in age/referrer/bio) ── */
+.plain-input {
+  width: 100%;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: 'Sora', sans-serif;
+  font-size: 0.9rem;
+  padding: 0.75rem 1rem;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.2s;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.plain-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+  background: #111325;
+}
+.plain-input::placeholder { color: #4a4870; }
+
+select.plain-input {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238884a8' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 2.5rem;
+}
+select.plain-input option { background: #13162a; }
+textarea.plain-input { resize: none; min-height: 80px; line-height: 1.5; }
+
+/* ── Section divider ── */
+.section-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 1.4rem 0 1.2rem;
+  animation: fadeIn 0.5s 0.55s both;
+}
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.section-divider span {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Account type cards ── */
+/* ── Terms row ── */
+.terms-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 1.4rem 0 1.6rem;
+  animation: fadeIn 0.5s 0.7s both;
+}
+.terms-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  margin-top: 2px;
+}
+.terms-text { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+.policy-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent2);
+  font: inherit;
+  cursor: pointer;
+}
+.policy-link:hover { text-decoration: underline; }
+
+/* ── Policy modal ── */
+.policy-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.policy-modal.hidden { display: none; }
+.hidden { display: none !important; }
+.policy-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 6, 15, 0.78);
+}
+.policy-dialog {
+  position: relative;
+  width: min(100%, 560px);
+  max-height: min(80vh, 560px);
+  overflow: auto;
+  padding: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border-hover);
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+.policy-dialog h2 { color: var(--text); margin-bottom: 1rem; }
+.policy-copy { color: var(--muted); line-height: 1.7; font-size: 0.88rem; }
+.policy-copy p + p { margin-top: 0.9rem; }
+.policy-close {
+  position: absolute;
+  top: 0.8rem;
+  right: 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 1.6rem;
+  cursor: pointer;
+}
+.policy-close:hover { color: var(--text); }
+
+/* ── Submit button timing override ── */
+.submit-btn { animation-delay: 0.74s; }
+.bottom-link { animation-delay: 0.80s; }
+
+/* register.css page */
+/* styling page */

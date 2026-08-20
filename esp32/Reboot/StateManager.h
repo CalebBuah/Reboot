@@ -76,6 +76,13 @@ public:
     lastRestartTime = millis();
     failureCount = 0;
   }
+
+  void resetCounters() {
+    currentState = STATE_INIT;
+    failureCount = 0;
+    restartCount = 0;
+    lastRestartTime = 0;
+  }
   
   int getRestartCount() {
     return restartCount;

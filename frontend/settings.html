@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - Reboot</title>
+  <link rel="stylesheet" href="css/shared.css" />
+  <link rel="stylesheet" href="css/content.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <nav class="navbar"><div class="navbar-container"><a href="dashboard.html" class="navbar-logo"><span class="navbar-logo-icon">R</span><span class="navbar-logo-text">Reboot</span></a><button class="navbar-toggle" aria-label="Toggle menu"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button><ul class="navbar-menu"><li><a href="dashboard.html">Home</a></li><li><a href="logs.html">Logs</a></li><li><a href="settings.html" class="active">Settings</a></li><li><a href="about.html">About</a></li><li><a href="signin.html" class="nav-signout" id="signout-link">Sign Out</a></li></ul></div></nav>
+  <main class="main-content"><div class="page-header"><div><h1 class="page-title">Device settings</h1><p class="page-sub">Adjust the values stored by the backend control plane.</p></div></div>
+    <div class="panel settings-panel"><div class="panel-header"><span class="panel-title">Watchdog configuration</span><span class="panel-tag" id="settings-state">Loading</span></div>
+      <form id="settings-form" class="settings-form">
+        <label class="setting-field"><span>Ping interval</span><select id="ping-interval"><option value="5000">5 seconds</option><option value="10000">10 seconds</option><option value="30000">30 seconds</option><option value="60000">60 seconds</option></select></label>
+        <label class="setting-field"><span>Restart limit per hour</span><input id="restart-limit" type="number" min="1" max="100" step="1" required /></label>
+        <label class="setting-field"><span>Failure threshold</span><input id="failure-threshold" type="number" min="1" max="20" step="1" required /></label>
+        <label class="setting-field"><span>Relay duration</span><select id="relay-duration"><option value="5000">5 seconds</option><option value="10000">10 seconds</option><option value="30000">30 seconds</option><option value="60000">60 seconds</option></select></label>
+        <button type="submit" class="hbtn prim">Save settings</button><p class="form-error" id="settings-error" hidden></p>
+      </form>
+      <p class="settings-note">These values are persisted in the backend. Firmware must retrieve or be reflashed with changed timing values before hardware behavior changes.</p>
+    </div>
+  </main>
+  <script src="js/api.js"></script><script src="js/page-nav.js"></script><script src="js/settings.js"></script>
+</body>
+</html>

@@ -33,10 +33,10 @@
         </button>
         <ul class="navbar-menu">
           <li><a href="dashboard.html" class="active">Home</a></li>
-          <li><a href="#">Logs</a></li>
-          <li><a href="#">Settings</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="signin.html" class="nav-signout">Sign Out</a></li>
+          <li><a href="logs.html">Logs</a></li>
+          <li><a href="settings.html">Settings</a></li>
+          <li><a href="about.html">About</a></li>
+            <li><a href="signin.html" class="nav-signout" id="signout-link">Sign Out</a></li>
         </ul>
       </div>
     </nav>
@@ -118,7 +118,7 @@
         <div class="panel">
           <div class="panel-header">
             <span class="panel-title">Ping activity (last 7 checks)</span>
-            <span class="panel-tag">8.8.8.8</span>
+            <span class="panel-tag" id="config-ping-target">Configured target</span>
           </div>
           <div class="bar-chart">
             <div class="bar-wrap">
@@ -161,7 +161,7 @@
           <div class="divider"></div>
           <div class="panel-sub-title">Connectivity checks</div>
           <div class="ping-row">
-            <span class="ping-host">8.8.8.8 (Google DNS)</span
+              <span class="ping-host">Configured ping target</span
             ><span class="ping-badge ok" id="ping1">&#10003; OK</span>
           </div>
           <div class="ping-row">
@@ -183,25 +183,25 @@
             </div>
             <div class="info-row">
               <span class="il">Device</span
-              ><span class="iv">ESP32 DevKit V1</span>
+              ><span class="iv" id="config-device">--</span>
             </div>
             <div class="info-row">
-              <span class="il">Interval</span><span class="iv">30 s</span>
+              <span class="il">Interval</span><span class="iv" id="config-interval">--</span>
             </div>
             <div class="info-row">
               <span class="il">Fail threshold</span
-              ><span class="iv">3 checks</span>
+              ><span class="iv" id="config-threshold">--</span>
             </div>
             <div class="info-row">
               <span class="il">Relay delay</span
-              ><span class="iv">10 s off / 60 s wait</span>
+              ><span class="iv" id="config-relay">--</span>
             </div>
             <div class="info-row">
               <span class="il">Restart limit</span
-              ><span class="iv">5 / hr</span>
+              ><span class="iv" id="config-limit">--</span>
             </div>
             <div class="info-row">
-              <span class="il">WiFi security</span><span class="iv">WPA2</span>
+              <span class="il">WiFi security</span><span class="iv" id="config-wifi">--</span>
             </div>
             <div class="info-row">
               <span class="il">Firmware state</span

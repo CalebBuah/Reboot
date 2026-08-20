@@ -1,0 +1,4 @@
+backend/.env
+backend/reboot.db-shm
+backend/reboot.db-wal
+essp32/Reboot/config.local.h

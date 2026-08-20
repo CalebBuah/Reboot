@@ -32,6 +32,7 @@ router.post('/heartbeat', async (req, res) => {
       });
     }
 
+    const previousStatus = await db.getDeviceStatus();
     await db.updateDeviceStatus({
       connected: ping_success === true,
       last_heartbeat: new Date().toISOString(),
@@ -50,7 +51,8 @@ router.post('/heartbeat', async (req, res) => {
       await db.addPingResult(config.PING_TARGET, ping_latency_ms, ping_success);
     }
 
-    if (state === 'STATE_RECOVERING') {
+    if (state === 'STATE_RECOVERING' && previousStatus?.state !== 'STATE_RECOVERING') {
+      await db.addRelayEvent('ACTIVATED', 'ESP32', true, 'Relay activated by watchdog');
       await db.addLog('info', 'RELAY', 'Relay activated — GPIO 5 HIGH', 'ESP32');
     } else if (state === 'STATE_RECOVERY_WAIT') {
       await db.addLog('info', 'RELAY', 'Relay off — GPIO 5 LOW. Waiting for router boot.', 'ESP32');
@@ -79,7 +81,7 @@ router.post('/heartbeat', async (req, res) => {
 // ESP32 polls for pending commands
 router.post('/command', async (req, res) => {
   try {
-    const pendingCommand = await db.getPendingCommand();
+    const pendingCommand = await db.claimPendingCommand();
     
     if (!pendingCommand) {
       return res.json({

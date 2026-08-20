@@ -14,20 +14,21 @@ router.post('/relay/restart', async (req, res) => {
   try {
     const { reason = 'USER_MANUAL' } = req.body;
 
-    // Check restart limit
+    const deviceConfig = await db.getDeviceConfig();
+    const restartLimit = deviceConfig?.restart_limit_per_hour || config.RESTART_LIMIT_PER_HOUR;
     const restartCount = await db.getRestartCountThisHour();
     
-    if (restartCount >= config.RESTART_LIMIT_PER_HOUR) {
+    if (restartCount >= restartLimit) {
       await db.addLog(
         'danger',
         'LIMIT',
-        `Restart limit reached (${config.RESTART_LIMIT_PER_HOUR}/hour)`,
+        `Restart limit reached (${restartLimit}/hour)`,
         'BACKEND'
       );
       
       return res.status(429).json({
         status: 'error',
-        message: `Restart limit reached: ${config.RESTART_LIMIT_PER_HOUR} per hour`,
+        message: `Restart limit reached: ${restartLimit} per hour`,
         code: 'RESTART_LIMIT_EXCEEDED',
         current_count: restartCount
       });
@@ -42,7 +43,7 @@ router.post('/relay/restart', async (req, res) => {
       success: true,
       message: 'Relay restart command queued',
       restarts_this_hour: restartCount + 1,
-      limit: config.RESTART_LIMIT_PER_HOUR
+      limit: restartLimit
     });
 
     console.log(`Relay restart queued: ${reason}`);
@@ -61,6 +62,7 @@ router.post('/relay/restart', async (req, res) => {
 // Reset all counters and state (backend only)
 router.post('/device/reset', async (req, res) => {
   try {
+    await db.addCommand('RESET_STATE');
     await db.updateDeviceStatus({
       connected: 0,
       state: 'STATE_INIT',
@@ -74,7 +76,7 @@ router.post('/device/reset', async (req, res) => {
 
     res.json({
       success: true,
-      message: 'Device state reset'
+      message: 'Device reset command queued'
     });
 
     console.log('Device reset');

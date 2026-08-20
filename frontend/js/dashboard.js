@@ -18,6 +18,20 @@ function setupNavbar() {
 
   if (!navbarToggle || !navbarMenu) return;
 
+  const signoutLink = document.getElementById('signout-link');
+  if (signoutLink) {
+    signoutLink.addEventListener('click', async (event) => {
+      event.preventDefault();
+      const authBase = window.location.port === '5000'
+        ? '/api'
+        : 'http://localhost:5000/api';
+      await fetch(`${authBase}/auth/logout`, { method: 'POST', credentials: 'include' });
+      window.location.href = window.location.port === '5000'
+        ? '/signin.html'
+        : 'http://localhost:5000/signin.html';
+    });
+  }
+
   navbarToggle.addEventListener('click', () => {
     navbarToggle.classList.toggle('active');
     navbarMenu.classList.toggle('active');
@@ -51,17 +65,39 @@ function stopPolling() {
 // ── Main Update Function ──
 async function updateDashboard() {
   try {
-    const status = await api.getDeviceStatus();
-    const logs = await api.getLogs(50);
-    const pings = await api.getPingHistory(7);
+    const [status, logs, pings, config] = await Promise.all([
+      api.getDeviceStatus(),
+      api.getLogs(50),
+      api.getPingHistory(7),
+      api.getDeviceConfig()
+    ]);
 
     renderStatus(status);
     renderLogs(logs.logs || []);
     renderPingChart(pings.pings || []);
+    renderDeviceConfig(config);
   } catch (err) {
     console.error('Dashboard update error:', err);
     showError('Failed to fetch device data');
   }
+}
+
+function renderDeviceConfig(config) {
+  if (!config) return;
+  const values = {
+    'config-device': config.device_name || 'ESP32 DevKit V1',
+    'config-interval': `${Math.round(config.ping_interval / 1000)} s`,
+    'config-threshold': `${config.failure_threshold} checks`,
+    'config-relay': `${config.relay_duration_ms / 1000} s on / ${(config.relay_off_wait_ms || 60000) / 1000} s wait`,
+    'config-limit': `${config.restart_limit_per_hour} / hr`,
+    'config-wifi': config.wifi_security || 'Not configured'
+  };
+  const target = document.getElementById('config-ping-target');
+  if (target) target.textContent = config.ping_target || 'Configured target';
+  Object.entries(values).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  });
 }
 
 // ── Render Status ──
@@ -277,7 +313,7 @@ async function refreshData() {
 async function forceRestart() {
   const status = await api.getDeviceStatus();
   if (status.is_offline) {
-    alert('Cannot restart: Device is offline');
+    showError('Cannot restart: Device is offline');
     return;
   }
 

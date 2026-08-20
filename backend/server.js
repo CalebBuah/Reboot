@@ -1,7 +1,9 @@
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const config = require('./config');
+const { requireAuth, requireDeviceAuth } = require('./middleware/auth');
 
 const path = require('path');
 
@@ -11,32 +13,46 @@ const esp32Routes = require('./routes/esp32');
 const controlRoutes = require('./routes/control');
 const logsRoutes = require('./routes/logs');
 const simulateRoutes = require('./routes/simulate');
+const authRoutes = require('./routes/auth');
 
 const app = express();
 
 // ── Middleware ──
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 // CORS
-if (config.NODE_ENV === 'development') {
-  app.use(cors({
-    origin: config.CORS_ORIGIN,
-    credentials: true
-  }));
-  console.log('CORS enabled for development');
-} else {
-  app.use(cors({
-    origin: ['http://localhost:5000'],
-    credentials: true
-  }));
-}
+app.use(cors({
+  origin: (origin, callback) => {
+    const developmentFileOrigin = config.NODE_ENV === 'development' && (!origin || origin === 'null');
+    callback(null, developmentFileOrigin || config.CORS_ORIGIN.includes(origin));
+  },
+  credentials: true
+}));
 
 // ── Serve Frontend Static Files ──
-app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend'), {
+  setHeaders: (res) => {
+    if (config.NODE_ENV === 'development') res.setHeader('Cache-Control', 'no-store');
+  }
+}));
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/dashboard.html'));
+});
+
+// ── Routes ──
+app.use('/api/auth', authRoutes);
+app.use('/api/device', requireAuth, deviceRoutes);
+app.use('/api/esp32', requireDeviceAuth, esp32Routes);
+app.use('/api', requireAuth, controlRoutes);
+app.use('/api', requireAuth, logsRoutes);
+app.use('/api/simulate', requireAuth, simulateRoutes);
+
+// ── Health check ──
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ── Global Error Handler ──
@@ -47,18 +63,6 @@ app.use((err, req, res, next) => {
     message: err.message,
     code: 'INTERNAL_ERROR'
   });
-});
-
-// ── Routes ──
-app.use('/api/device', deviceRoutes);
-app.use('/api/esp32', esp32Routes);
-app.use('/api', controlRoutes);
-app.use('/api', logsRoutes);
-app.use('/api/simulate', simulateRoutes);
-
-// ── Health check ──
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // ── Not found ──

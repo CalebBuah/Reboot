@@ -18,6 +18,53 @@ const db = new sqlite3.Database(dbPath, (err) => {
 // Enable foreign keys
 db.run('PRAGMA foreign_keys = ON');
 
+db.serialize(() => {
+  db.run(`CREATE TABLE IF NOT EXISTS device_config (
+    id INTEGER PRIMARY KEY,
+    ping_interval INTEGER NOT NULL DEFAULT 30000,
+    failure_threshold INTEGER NOT NULL DEFAULT 3,
+    relay_duration_ms INTEGER NOT NULL DEFAULT 10000,
+    restart_limit_per_hour INTEGER NOT NULL DEFAULT 5,
+    backend_url TEXT DEFAULT 'http://192.168.x.x:5000',
+    firmware_version TEXT,
+    device_name TEXT DEFAULT 'ESP32 DevKit V1',
+    wifi_security TEXT DEFAULT 'WPA2',
+    relay_off_wait_ms INTEGER DEFAULT 60000,
+    ping_target TEXT DEFAULT '8.8.8.8'
+  )`);
+  db.run("ALTER TABLE device_config ADD COLUMN device_name TEXT DEFAULT 'ESP32 DevKit V1'", () => {});
+  db.run("ALTER TABLE device_config ADD COLUMN wifi_security TEXT DEFAULT 'WPA2'", () => {});
+  db.run('ALTER TABLE device_config ADD COLUMN relay_off_wait_ms INTEGER DEFAULT 60000', () => {});
+  db.run("ALTER TABLE device_config ADD COLUMN ping_target TEXT DEFAULT '8.8.8.8'", () => {});
+  db.run(`CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    email TEXT NOT NULL UNIQUE,
+    first_name TEXT NOT NULL,
+    last_name TEXT NOT NULL,
+    account_type TEXT NOT NULL DEFAULT 'personal',
+    password_hash TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+  )`);
+  db.run(`CREATE TABLE IF NOT EXISTS sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+  db.run(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL UNIQUE,
+    expires_at TEXT NOT NULL,
+    used_at TEXT,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  )`);
+});
+
 // ── Helper: Run query with promise ──
 function dbRun(sql, params = []) {
   return new Promise((resolve, reject) => {
@@ -46,6 +93,61 @@ function dbAll(sql, params = []) {
       else resolve(rows || []);
     });
   });
+}
+
+async function createUser(user) {
+  return dbRun(`
+    INSERT INTO users (username, email, first_name, last_name, account_type, password_hash)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `, [user.username, user.email, user.first_name, user.last_name, user.account_type, user.password_hash]);
+}
+
+async function getUserById(id) {
+  return dbGet('SELECT * FROM users WHERE id = ?', [id]);
+}
+
+async function getUserByEmail(email) {
+  return dbGet('SELECT * FROM users WHERE email = ?', [email]);
+}
+
+async function getUserByIdentifier(identifier) {
+  return dbGet('SELECT * FROM users WHERE username = ? OR email = ?', [identifier, identifier]);
+}
+
+async function addSession(userId, tokenHash, expiresAt) {
+  return dbRun('INSERT INTO sessions (user_id, token_hash, expires_at) VALUES (?, ?, ?)', [userId, tokenHash, expiresAt]);
+}
+
+async function getSession(tokenHash) {
+  return dbGet(`
+    SELECT sessions.*, users.username, users.email, users.first_name, users.last_name, users.account_type
+    FROM sessions JOIN users ON users.id = sessions.user_id
+    WHERE sessions.token_hash = ?
+  `, [tokenHash]);
+}
+
+async function deleteSession(tokenHash) {
+  return dbRun('DELETE FROM sessions WHERE token_hash = ?', [tokenHash]);
+}
+
+async function deleteUserSessions(userId) {
+  return dbRun('DELETE FROM sessions WHERE user_id = ?', [userId]);
+}
+
+async function addPasswordResetToken(userId, tokenHash, expiresAt) {
+  return dbRun('INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)', [userId, tokenHash, expiresAt]);
+}
+
+async function getPasswordResetToken(tokenHash) {
+  return dbGet('SELECT * FROM password_reset_tokens WHERE token_hash = ?', [tokenHash]);
+}
+
+async function updateUserPassword(userId, passwordHash) {
+  return dbRun('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, userId]);
+}
+
+async function usePasswordResetToken(id) {
+  return dbRun('UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
 }
 
 // ── Device Status ──
@@ -139,10 +241,10 @@ async function updateDeviceConfig(updates) {
 
 // ── Restart Count (per hour) ──
 async function getRestartCountThisHour() {
-  const oneHourAgo = new Date(Date.now() - 3600000).toISOString();
+  const oneHourAgo = new Date(Date.now() - config.RESTART_HOUR_WINDOW_MS).toISOString();
   const result = await dbGet(`
     SELECT COUNT(*) as count FROM relay_events
-    WHERE action = 'ACTIVATED' AND timestamp > ?
+    WHERE action IN ('ACTIVATION_REQUESTED', 'ACTIVATED') AND timestamp > ?
   `, [oneHourAgo]);
   
   return result?.count || 0;
@@ -153,7 +255,7 @@ function formatDeviceStatus(row) {
   if (!row) return null;
   
   const isOffline = row.last_heartbeat 
-    ? (Date.now() - new Date(row.last_heartbeat).getTime()) > 35000
+    ? (Date.now() - new Date(row.last_heartbeat).getTime()) > config.HEARTBEAT_TIMEOUT_MS
     : true;
   
   return {
@@ -179,6 +281,29 @@ async function getPendingCommand() {
   `);
 }
 
+async function claimPendingCommand() {
+  await dbRun('BEGIN IMMEDIATE TRANSACTION');
+  try {
+    const command = await dbGet(`
+      SELECT * FROM device_commands
+      WHERE status = 'PENDING'
+      ORDER BY id ASC
+      LIMIT 1
+    `);
+    if (!command) {
+      await dbRun('COMMIT');
+      return null;
+    }
+
+    await dbRun("UPDATE device_commands SET status = 'CLAIMED' WHERE id = ? AND status = 'PENDING'", [command.id]);
+    await dbRun('COMMIT');
+    return { ...command, status: 'CLAIMED' };
+  } catch (err) {
+    await dbRun('ROLLBACK');
+    throw err;
+  }
+}
+
 async function addCommand(command) {
   const sql = `
     INSERT INTO device_commands (command, status, created_at)
@@ -191,7 +316,7 @@ async function completeCommand(commandId) {
   const sql = `
     UPDATE device_commands 
     SET status = 'COMPLETED', completed_at = CURRENT_TIMESTAMP 
-    WHERE id = ?
+    WHERE id = ? AND status = 'CLAIMED'
   `;
   return dbRun(sql, [commandId]);
 }
@@ -210,6 +335,18 @@ module.exports = {
   dbRun,
   dbGet,
   dbAll,
+  createUser,
+  getUserById,
+  getUserByEmail,
+  getUserByIdentifier,
+  addSession,
+  getSession,
+  deleteSession,
+  deleteUserSessions,
+  addPasswordResetToken,
+  getPasswordResetToken,
+  updateUserPassword,
+  usePasswordResetToken,
   getDeviceStatus,
   updateDeviceStatus,
   addLog,
@@ -223,6 +360,7 @@ module.exports = {
   getRestartCountThisHour,
   formatDeviceStatus,
   getPendingCommand,
+  claimPendingCommand,
   addCommand,
   completeCommand,
   getCommandHistory

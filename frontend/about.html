@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About - Reboot</title>
+  <link rel="stylesheet" href="css/shared.css" />
+  <link rel="stylesheet" href="css/content.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+  <nav class="navbar"><div class="navbar-container"><a href="dashboard.html" class="navbar-logo"><span class="navbar-logo-icon">R</span><span class="navbar-logo-text">Reboot</span></a><button class="navbar-toggle" aria-label="Toggle menu"><span class="bar"></span><span class="bar"></span><span class="bar"></span></button><ul class="navbar-menu"><li><a href="dashboard.html">Home</a></li><li><a href="logs.html">Logs</a></li><li><a href="settings.html">Settings</a></li><li><a href="about.html" class="active">About</a></li><li><a href="signin.html" class="nav-signout" id="signout-link">Sign Out</a></li></ul></div></nav>
+  <main class="main-content"><div class="page-header"><div><h1 class="page-title">About Reboot</h1><p class="page-sub">A local router watchdog and relay recovery system.</p></div></div>
+    <div class="mid-grid"><section class="panel"><div class="panel-header"><span class="panel-title">System architecture</span><span class="panel-tag">v1.0</span></div><p class="about-copy">Reboot combines an ESP32 watchdog, an Express API, SQLite persistence, and a browser dashboard. The ESP32 monitors connectivity and controls the relay; the backend stores state, logs, and commands; the dashboard provides authenticated visibility and control.</p></section><section class="panel"><div class="panel-header"><span class="panel-title">Safety boundary</span><span class="panel-tag online">Protected</span></div><p class="about-copy">Browser control endpoints require an authenticated session. ESP32 endpoints require the device token. Restart commands are rate-limited and queued for device execution.</p></section></div>
+  </main>
+  <script src="js/page-nav.js"></script>
+</body>
+</html>

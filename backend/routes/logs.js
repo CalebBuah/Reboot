@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const config = require('../config');
 
 // ── GET /api/logs ──
 router.get('/logs', async (req, res) => {
@@ -51,7 +52,7 @@ router.get('/relay/history', async (req, res) => {
 router.get('/ping/history', async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 7;
-    const history = await db.getLastPings('8.8.8.8', limit);
+    const history = await db.getLastPings(config.PING_TARGET, limit);
 
     res.json({
       success: true,
