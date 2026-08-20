@@ -112,6 +112,41 @@
         </div>
       </div>
 
+      <!-- Latest network diagnostics -->
+      <div class="panel diagnostics-panel">
+        <div class="panel-header">
+          <span class="panel-title">Network diagnostics</span>
+          <span class="panel-tag" id="diagnostic-time">No report</span>
+        </div>
+        <div class="diagnostic-grid">
+          <div class="diagnostic-group">
+            <div class="diagnostic-title">1. WiFi status</div>
+            <div class="diagnostic-row"><span>Result</span><strong class="diagnostic-value" id="diag-wifi-status">--</strong></div>
+            <div class="diagnostic-row"><span>RSSI</span><strong class="diagnostic-value" id="diag-wifi-rssi">--</strong></div>
+          </div>
+          <div class="diagnostic-group">
+            <div class="diagnostic-title">2. Local Gateway</div>
+            <div class="diagnostic-row"><span>Address</span><strong class="diagnostic-value" id="diag-gateway-address">--</strong></div>
+            <div class="diagnostic-row"><span>Status</span><strong class="diagnostic-value" id="diag-gateway-status">--</strong></div>
+            <div class="diagnostic-row"><span>Latency</span><strong class="diagnostic-value" id="diag-gateway-latency">--</strong></div>
+          </div>
+          <div class="diagnostic-group">
+            <div class="diagnostic-title">3. WAN</div>
+            <div class="diagnostic-row"><span>Status</span><strong class="diagnostic-value" id="diag-wan-status">--</strong></div>
+            <div class="diagnostic-row"><span>WAN IP</span><strong class="diagnostic-value" id="diag-wan-ip">--</strong></div>
+            <div class="diagnostic-row"><span>Gateway</span><strong class="diagnostic-value" id="diag-wan-gateway">--</strong></div>
+          </div>
+          <div class="diagnostic-group">
+            <div class="diagnostic-title">4. DNS</div>
+            <div class="diagnostic-row"><span>Status</span><strong class="diagnostic-value" id="diag-dns-status">--</strong></div>
+          </div>
+          <div class="diagnostic-group">
+            <div class="diagnostic-title">5. HTTPS</div>
+            <div class="diagnostic-row"><span>Status</span><strong class="diagnostic-value" id="diag-https-status">--</strong></div>
+          </div>
+        </div>
+      </div>
+
       <!-- Mid row: chart + side panels -->
       <div class="mid-grid">
         <!-- Ping activity + connectivity checks -->

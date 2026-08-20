@@ -1,7 +1,5 @@
-/* ============================================
-   content.css — Reboot Dashboard v2
-   Dark purple theme — matches shared.css
-   ============================================ */
+/* content.css — Reboot Dashboard v2
+   Dark purple theme — matches shared.css*/
 
 body {
   display: block;
@@ -209,6 +207,16 @@ body {
 }
 .stat-card:hover { border-color: var(--border-hover); box-shadow: 0 6px 28px rgba(124,94,247,0.1); }
 
+/* ── Diagnostics ── */
+.diagnostics-panel { margin-bottom: 1.2rem; animation: fadeIn 0.5s 0.2s both; }
+.diagnostic-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 1rem; }
+.diagnostic-group { border-left: 2px solid var(--border); padding-left: 0.85rem; }
+.diagnostic-title { color: var(--text); font-size: 0.82rem; font-weight: 600; margin-bottom: 0.7rem; }
+.diagnostic-row { display: flex; justify-content: space-between; gap: 0.75rem; padding: 0.28rem 0; color: var(--muted); font-size: 0.75rem; }
+.diagnostic-value { color: var(--text); font-family: 'Space Mono', monospace; font-size: 0.7rem; text-align: right; }
+.diagnostic-value.pass { color: #22c55e; }
+.diagnostic-value.fail { color: #ef4444; }
+
 /* Accent left border strips */
 .stat-green  { border-left: 3px solid #22c55e; padding-left: 1.1rem; border-radius: 0 14px 14px 0; }
 .stat-purple { border-left: 3px solid #7c5ef7; padding-left: 1.1rem; border-radius: 0 14px 14px 0; }
@@ -319,15 +327,6 @@ body {
   transition: border-color 0.22s;
 }
 .panel:hover { border-color: var(--border-hover); }
-.page-panel { margin-top: 1.2rem; }
-.about-copy { color: var(--muted); font-size: 0.9rem; line-height: 1.7; }
-.settings-panel { max-width: 760px; }
-.settings-form { display: grid; gap: 1rem; }
-.setting-field { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(180px, 260px); align-items: center; gap: 1rem; color: var(--muted); font-size: 0.85rem; }
-.setting-field input, .setting-field select { width: 100%; padding: 0.7rem 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--input-bg); color: var(--text); font: inherit; outline: none; }
-.setting-field input:focus, .setting-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
-.settings-note { margin-top: 1.2rem; color: var(--muted); font-size: 0.75rem; line-height: 1.5; }
-.log-page-wrap { max-height: 520px; }
 
 .panel-header {
   display: flex;
@@ -554,6 +553,7 @@ body {
 /* ── Responsive ── */
 @media (max-width: 1100px) {
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .diagnostic-grid { grid-template-columns: repeat(2, 1fr); }
   .mid-grid  { grid-template-columns: 1fr; }
   .bot-grid  { grid-template-columns: 1fr; }
 }
@@ -585,4 +585,5 @@ body {
 }
 @media (max-width: 480px) {
   .stat-grid { grid-template-columns: 1fr; }
+  .diagnostic-grid { grid-template-columns: 1fr; }
 }

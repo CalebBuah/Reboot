@@ -1,0 +1,6 @@
+/* About page */
+.about-copy {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.7;
+}

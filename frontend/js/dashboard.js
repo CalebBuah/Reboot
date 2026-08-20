@@ -65,21 +65,49 @@ function stopPolling() {
 // ── Main Update Function ──
 async function updateDashboard() {
   try {
-    const [status, logs, pings, config] = await Promise.all([
+    const [status, logs, pings, config, diagnostic] = await Promise.all([
       api.getDeviceStatus(),
       api.getLogs(50),
       api.getPingHistory(7),
-      api.getDeviceConfig()
+      api.getDeviceConfig(),
+      api.getLatestDiagnostic()
     ]);
 
     renderStatus(status);
     renderLogs(logs.logs || []);
     renderPingChart(pings.pings || []);
     renderDeviceConfig(config);
+    renderDiagnostics(diagnostic.diagnostic);
   } catch (err) {
     console.error('Dashboard update error:', err);
     showError('Failed to fetch device data');
   }
+}
+
+function renderDiagnostics(diagnostic) {
+  if (!diagnostic) return;
+
+  const details = diagnostic.details || {};
+  const layerValue = (layer, fallback = '--') => {
+    const value = details[`layer${layer}`];
+    return value ? String(value).toLowerCase() : fallback;
+  };
+  const setValue = (id, value, result = false) => {
+    const element = document.getElementById(id);
+    if (!element) return;
+    element.textContent = value;
+    if (result) {
+      element.className = `diagnostic-value ${value === 'PASS' ? 'pass' : value === 'FAIL' ? 'fail' : ''}`;
+    }
+  };
+
+  setValue('diag-wifi-status', layerValue(1).toUpperCase(), true);
+  setValue('diag-gateway-status', layerValue(2).toUpperCase(), true);
+  setValue('diag-wan-status', layerValue(3).toUpperCase(), true);
+  setValue('diag-dns-status', layerValue(4).toUpperCase(), true);
+  setValue('diag-https-status', layerValue(5).toUpperCase(), true);
+  setValue('diag-gateway-latency', diagnostic.latency_ms ? `${diagnostic.latency_ms} ms` : '--');
+  setValue('diagnostic-time', diagnostic.timestamp ? formatTimestamp(diagnostic.timestamp) : 'Latest report');
 }
 
 function renderDeviceConfig(config) {

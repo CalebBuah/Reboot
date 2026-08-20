@@ -73,6 +73,12 @@ async function getPingHistory(limit = 7) {
   return handleResponse(response);
 }
 
+// Latest five-layer diagnostic report
+async function getLatestDiagnostic() {
+  const response = await fetch(`${API_BASE_URL}/diagnostics/latest`, { credentials: 'include' });
+  return handleResponse(response);
+}
+
 // Trigger Relay Restart
 async function triggerRestart(reason = 'USER_MANUAL') {
   const response = await fetch(`${API_BASE_URL}/relay/restart`, {
@@ -141,6 +147,7 @@ window.api = {
   getLogs,
   getRelayHistory,
   getPingHistory,
+  getLatestDiagnostic,
   triggerRestart,
   resetDevice,
   simulateConnected,

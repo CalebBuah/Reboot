@@ -1,0 +1,50 @@
+/* Settings page */
+.settings-panel {
+  max-width: 760px;
+}
+
+.settings-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.setting-field {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(180px, 260px);
+  align-items: center;
+  gap: 1rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.setting-field input,
+.setting-field select {
+  width: 100%;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+.setting-field input:focus,
+.setting-field select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.settings-note {
+  margin-top: 1.2rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+  .setting-field {
+    grid-template-columns: 1fr;
+    gap: 0.45rem;
+  }
+}
