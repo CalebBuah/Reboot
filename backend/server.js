@@ -13,11 +13,8 @@ const esp32Routes = require('./routes/esp32');
 const controlRoutes = require('./routes/control');
 const logsRoutes = require('./routes/logs');
 const simulateRoutes = require('./routes/simulate');
-<<<<<<< HEAD
 const authRoutes = require('./routes/auth');
-=======
 const diagnosticsRoutes = require('./routes/diagnostics');
->>>>>>> 46052d36ae8f62eaeb55ed8120faed401bc1393b
 
 const app = express();
 
@@ -53,6 +50,7 @@ app.use('/api/esp32', requireDeviceAuth, esp32Routes);
 app.use('/api', requireAuth, controlRoutes);
 app.use('/api', requireAuth, logsRoutes);
 app.use('/api/simulate', requireAuth, simulateRoutes);
+app.use('/', diagnosticsRoutes);
 
 // ── Health check ──
 app.get('/health', (req, res) => {
@@ -69,22 +67,6 @@ app.use((err, req, res, next) => {
   });
 });
 
-<<<<<<< HEAD
-=======
-// ── Routes ──
-app.use('/api/device', deviceRoutes);
-app.use('/api/esp32', esp32Routes);
-app.use('/api', controlRoutes);
-app.use('/api', logsRoutes);
-app.use('/api/simulate', simulateRoutes);
-app.use('/', diagnosticsRoutes);
-
-// ── Health check ──
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
->>>>>>> 46052d36ae8f62eaeb55ed8120faed401bc1393b
 // ── Not found ──
 app.use((req, res) => {
   res.status(404).json({
